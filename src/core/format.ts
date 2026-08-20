@@ -1,6 +1,7 @@
 // GitHub event -> human sentence. This is the file you'll edit most when
 // you want the toasts to say something different.
 
+import { t } from "./i18n";
 import type { EventCategory, GhEvent, Notice } from "./types";
 
 const CATEGORY_OF: Record<string, EventCategory> = {
@@ -46,21 +47,21 @@ export function toNotice(ev: GhEvent): Notice | null {
       const branch = shortRef(p.ref);
       const n: number = p.size ?? p.commits?.length ?? 0;
       const msg = firstLine(p.commits?.[0]?.message);
-      title = `${who} hizo push a ${repo}`;
-      body = `${n} commit${n === 1 ? "" : "s"} en ${branch}${msg ? `: ${clip(msg)}` : ""}`;
+      title = t("ev.push.title", { who, repo });
+      body = t(n === 1 ? "ev.push.body" : "ev.push.bodyPlural", { n, branch }) + (msg ? `: ${clip(msg)}` : "");
       url = p.before && p.head ? `${repoUrl}/compare/${p.before}...${p.head}` : `${repoUrl}/commits/${branch}`;
       break;
     }
     case "PullRequestEvent": {
       const pr = p.pull_request ?? {};
       const num = p.number ?? pr.number;
-      const verb =
-        p.action === "opened" ? "abrió" :
-        p.action === "closed" ? (pr.merged ? "mergeó" : "cerró") :
-        p.action === "reopened" ? "reabrió" :
-        p.action === "ready_for_review" ? "marcó listo para review" :
-        p.action;
-      title = `${who} ${verb} PR #${num} en ${repo}`;
+      const key =
+        p.action === "opened" ? "ev.pr.opened" :
+        p.action === "closed" ? (pr.merged ? "ev.pr.merged" : "ev.pr.closed") :
+        p.action === "reopened" ? "ev.pr.reopened" :
+        p.action === "ready_for_review" ? "ev.pr.ready" :
+        "ev.pr.other";
+      title = t(key, { who, num, repo, action: p.action });
       body = clip(pr.title ?? "");
       url = pr.html_url ?? repoUrl;
       break;
@@ -68,40 +69,39 @@ export function toNotice(ev: GhEvent): Notice | null {
     case "PullRequestReviewEvent": {
       const pr = p.pull_request ?? {};
       const state: string = p.review?.state ?? "";
-      const verb =
-        state === "approved" ? "aprobó" :
-        state === "changes_requested" ? "pidió cambios en" :
-        "comentó en";
-      title = `${who} ${verb} PR #${pr.number} en ${repo}`;
+      const key =
+        state === "approved" ? "ev.review.approved" :
+        state === "changes_requested" ? "ev.review.changes" :
+        "ev.review.commented";
+      title = t(key, { who, num: pr.number, repo });
       body = clip(pr.title ?? "");
       url = p.review?.html_url ?? pr.html_url ?? repoUrl;
       break;
     }
     case "PullRequestReviewCommentEvent": {
       const pr = p.pull_request ?? {};
-      title = `${who} comentó código en PR #${pr.number} de ${repo}`;
+      title = t("ev.reviewComment", { who, num: pr.number, repo });
       body = clip(firstLine(p.comment?.body));
       url = p.comment?.html_url ?? repoUrl;
       break;
     }
     case "IssuesEvent": {
       const is = p.issue ?? {};
-      const verb = p.action === "opened" ? "abrió" : p.action === "closed" ? "cerró" : p.action;
-      title = `${who} ${verb} issue #${is.number} en ${repo}`;
+      const key = p.action === "opened" ? "ev.issue.opened" : p.action === "closed" ? "ev.issue.closed" : "ev.issue.other";
+      title = t(key, { who, num: is.number, repo, action: p.action });
       body = clip(is.title ?? "");
       url = is.html_url ?? repoUrl;
       break;
     }
     case "IssueCommentEvent": {
       const is = p.issue ?? {};
-      const kind = is.pull_request ? "PR" : "issue";
-      title = `${who} comentó en ${kind} #${is.number} de ${repo}`;
+      title = t(is.pull_request ? "ev.comment.pr" : "ev.comment.issue", { who, num: is.number, repo });
       body = clip(firstLine(p.comment?.body));
       url = p.comment?.html_url ?? repoUrl;
       break;
     }
     case "CommitCommentEvent": {
-      title = `${who} comentó un commit en ${repo}`;
+      title = t("ev.commitComment", { who, repo });
       body = clip(firstLine(p.comment?.body));
       url = p.comment?.html_url ?? repoUrl;
       break;
@@ -109,35 +109,35 @@ export function toNotice(ev: GhEvent): Notice | null {
     case "CreateEvent": {
       // ref_type is "branch", "tag" or "repository"
       if (p.ref_type === "repository") {
-        title = `${who} creó el repo ${repo}`;
+        title = t("ev.create.repo", { who, repo });
       } else {
-        title = `${who} creó ${p.ref_type === "tag" ? "el tag" : "la rama"} ${p.ref} en ${repo}`;
+        title = t(p.ref_type === "tag" ? "ev.create.tag" : "ev.create.branch", { who, ref: p.ref, repo });
         url = `${repoUrl}/tree/${p.ref}`;
       }
       break;
     }
     case "DeleteEvent": {
-      title = `${who} borró ${p.ref_type === "tag" ? "el tag" : "la rama"} ${p.ref} en ${repo}`;
+      title = t(p.ref_type === "tag" ? "ev.delete.tag" : "ev.delete.branch", { who, ref: p.ref, repo });
       break;
     }
     case "ReleaseEvent": {
       const rel = p.release ?? {};
-      title = `${who} publicó release ${rel.tag_name ?? ""} en ${repo}`;
+      title = t("ev.release", { who, tag: rel.tag_name ?? "", repo });
       body = clip(rel.name ?? "");
       url = rel.html_url ?? repoUrl;
       break;
     }
     case "WatchEvent": {
-      title = `${who} le dio star a ${repo}`;
+      title = t("ev.star", { who, repo });
       break;
     }
     case "ForkEvent": {
-      title = `${who} forkeó ${repo}`;
+      title = t("ev.fork", { who, repo });
       url = p.forkee?.html_url ?? repoUrl;
       break;
     }
     case "MemberEvent": {
-      title = `${who} ${p.action === "added" ? "agregó" : p.action} a ${p.member?.login} en ${repo}`;
+      title = t("ev.member", { who, member: p.member?.login ?? "?", repo });
       break;
     }
   }

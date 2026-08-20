@@ -8,10 +8,11 @@ import { open as pickFile } from "@tauri-apps/plugin-dialog";
 import { setToken } from "../platform/secrets";
 import { isValidTarget, whoAmI } from "../core/github";
 import { ringTray, toast } from "../platform/notify";
-import { BUILTIN_SOUNDS, customPath, playSound, type SoundRef } from "../platform/sounds";
+import { BUILTIN_SOUNDS, builtinLabel, customPath, playSound, type BuiltinSoundId, type SoundRef } from "../platform/sounds";
+import { applyStatic, initLang, t, type LangSetting } from "../core/i18n";
 import {
   ALL_CATEGORIES,
-  CATEGORY_LABELS,
+  categoryLabel,
   type EventCategory,
   type Notice,
   type PollStatus,
@@ -33,6 +34,7 @@ export interface UiHandlers {
 export class Ui {
   private settings: Settings;
   private recent: Notice[] = [];
+  private lastStatus: PollStatus = { kind: "idle" };
 
   constructor(
     settings: Settings,
@@ -45,6 +47,7 @@ export class Ui {
   }
 
   mount(): void {
+    applyStatic();
     this.renderEventToggles();
     this.bindToken();
     this.bindTargets();
@@ -63,27 +66,27 @@ export class Ui {
     const input = $<HTMLInputElement>("#token");
     const status = $("#token-status");
     // never echo the stored token back into the DOM; a placeholder is enough
-    if (this.hasToken) input.placeholder = "•••••••• (guardado en el llavero del sistema)";
-    if (this.settings.login) status.textContent = `Conectado como @${this.settings.login}`;
+    if (this.hasToken) input.placeholder = t("account.stored");
+    if (this.settings.login) status.textContent = t("account.connected", { login: this.settings.login });
 
     $("#token-save").addEventListener("click", async () => {
       const token = input.value.trim();
       if (!token) {
-        status.textContent = "Pega un token primero";
+        status.textContent = t("account.pasteFirst");
         return;
       }
-      status.textContent = "Verificando…";
+      status.textContent = t("account.verifying");
       try {
         const login = await whoAmI(token);
         await setToken(token);
         await this.h.onTokenChange(token);
         this.hasToken = true;
         input.value = "";
-        input.placeholder = "•••••••• (guardado en el llavero del sistema)";
-        status.textContent = `Conectado como @${login}`;
+        input.placeholder = t("account.stored");
+        status.textContent = t("account.connected", { login });
         await this.commit({ ...this.settings, login });
       } catch (e) {
-        status.textContent = `Token inválido: ${e instanceof Error ? e.message : e}`;
+        status.textContent = t("account.invalid", { error: e instanceof Error ? e.message : String(e) });
       }
     });
   }
@@ -93,15 +96,15 @@ export class Ui {
   private bindTargets(): void {
     const input = $<HTMLInputElement>("#target-input");
     const add = async () => {
-      const t = input.value.trim();
-      if (!isValidTarget(t)) {
-        input.setCustomValidity("Usa owner/repo, org:nombre o @me");
+      const value = input.value.trim();
+      if (!isValidTarget(value)) {
+        input.setCustomValidity(t("targets.invalid"));
         input.reportValidity();
         return;
       }
       input.setCustomValidity("");
-      if (!this.settings.targets.includes(t)) {
-        await this.commit({ ...this.settings, targets: [...this.settings.targets, t] });
+      if (!this.settings.targets.includes(value)) {
+        await this.commit({ ...this.settings, targets: [...this.settings.targets, value] });
         this.renderTargets();
       }
       input.value = "";
@@ -115,17 +118,23 @@ export class Ui {
   private renderTargets(): void {
     const list = $("#targets");
     list.replaceChildren(
-      ...this.settings.targets.map((t) => {
+      ...this.settings.targets.map((target) => {
         const li = document.createElement("li");
         li.className = "chip";
-        li.innerHTML = `<span>${t}</span><button aria-label="Quitar ${t}" title="Quitar">×</button>`;
-        li.querySelector("button")!.addEventListener("click", async () => {
+        const name = document.createElement("span");
+        name.textContent = target;
+        const remove = document.createElement("button");
+        remove.textContent = "×";
+        remove.title = t("targets.remove", { target });
+        remove.setAttribute("aria-label", remove.title);
+        remove.addEventListener("click", async () => {
           await this.commit({
             ...this.settings,
-            targets: this.settings.targets.filter((x) => x !== t),
+            targets: this.settings.targets.filter((x) => x !== target),
           });
           this.renderTargets();
         });
+        li.append(name, remove);
         return li;
       }),
     );
@@ -148,7 +157,7 @@ export class Ui {
             events: { ...this.settings.events, [cat]: cb.checked },
           }),
         );
-        label.append(cb, document.createTextNode(CATEGORY_LABELS[cat]));
+        label.append(cb, document.createTextNode(categoryLabel(cat)));
         return label;
       }),
     );
@@ -181,10 +190,21 @@ export class Ui {
       await this.syncAutostart();
     });
 
+    const language = $<HTMLSelectElement>("#language");
+    language.value = this.settings.language;
+    language.addEventListener("change", async () => {
+      const next = language.value as LangSetting;
+      await this.commit({ ...this.settings, language: next });
+      const lang = initLang(next, navigator.language);
+      // Rust owns the tray menu labels; keep it in sync
+      invoke("set_language", { lang }).catch((e) => console.warn("set_language", e));
+      this.rerender();
+    });
+
     $("#test-toast").addEventListener("click", async () => {
       ringTray();
       this.ringMascot();
-      await toast("GitBell funciona", "Así se van a ver los avisos. Click para abrir GitHub.", "https://github.com");
+      await toast(t("test.title"), t("test.body"), "https://github.com");
       if (this.settings.soundsEnabled) {
         await playSound(this.settings.sounds.push, this.settings.volume);
       }
@@ -220,15 +240,15 @@ export class Ui {
         row.className = "sound-row";
 
         const name = document.createElement("span");
-        name.textContent = CATEGORY_LABELS[cat];
+        name.textContent = categoryLabel(cat);
 
         const select = document.createElement("select");
         const opts: [SoundRef | "custom", string][] = [
-          ["none", "Sin sonido"],
-          ...(Object.entries(BUILTIN_SOUNDS) as [SoundRef, { label: string }][]).map(
-            ([id, s]) => [id, s.label] as [SoundRef, string],
+          ["none", t("sounds.none")],
+          ...(Object.keys(BUILTIN_SOUNDS) as BuiltinSoundId[]).map(
+            (id) => [id, builtinLabel(id)] as [SoundRef, string],
           ),
-          ["custom", custom ? `Archivo: ${custom.split("/").pop()}` : "Archivo propio…"],
+          ["custom", custom ? t("sounds.file", { name: custom.split("/").pop() ?? "" }) : t("sounds.pick")],
         ];
         for (const [value, label] of opts) {
           const o = document.createElement("option");
@@ -245,7 +265,7 @@ export class Ui {
           const picked = await pickFile({
             multiple: false,
             directory: false,
-            title: `Sonido para ${CATEGORY_LABELS[cat]}`,
+            title: t("sounds.pickTitle", { category: categoryLabel(cat) }),
             filters: [{ name: "Audio", extensions: ["ogg", "wav", "mp3", "flac", "opus"] }],
           });
           if (typeof picked === "string") {
@@ -255,7 +275,7 @@ export class Ui {
               const stored = await invoke<string>("import_sound", { path: picked });
               await this.setSound(cat, `file:${stored}`);
             } catch (e) {
-              alert(`No se pudo importar el sonido: ${e}`);
+              alert(t("sounds.importFailed", { error: String(e) }));
               select.value = custom ? "custom" : current;
             }
           } else {
@@ -266,7 +286,7 @@ export class Ui {
 
         const play = document.createElement("button");
         play.className = "ghost icon";
-        play.title = "Escuchar";
+        play.title = t("sounds.play");
         play.textContent = "▶";
         play.addEventListener("click", () =>
           void playSound(this.settings.sounds[cat], this.settings.volume),
@@ -292,18 +312,35 @@ export class Ui {
     }
   }
 
+  // ---- language switch ---------------------------------------------------
+
+  /** Repaint every translated string in place. No reload, scroll stays. */
+  private rerender(): void {
+    applyStatic();
+    this.renderEventToggles();
+    this.renderSoundRows();
+    this.renderTargets();
+    this.renderRecent();
+    this.setStatus(this.lastStatus);
+    const input = $<HTMLInputElement>("#token");
+    if (this.hasToken) input.placeholder = t("account.stored");
+    const status = $("#token-status");
+    if (this.settings.login) status.textContent = t("account.connected", { login: this.settings.login });
+  }
+
   // ---- status + activity -------------------------------------------------
 
   setStatus(s: PollStatus): void {
+    this.lastStatus = s;
     const el = $("#status");
     el.dataset.kind = s.kind;
     const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     el.textContent =
-      s.kind === "idle" ? "En espera" :
-      s.kind === "polling" ? "Revisando…" :
-      s.kind === "ok" ? `Última revisión ${fmt(s.at)}${s.remaining !== null ? ` · ${s.remaining} req restantes` : ""}` :
-      s.kind === "paused" ? `${s.reason}, reintento a las ${fmt(s.until)}` :
-      `Error: ${s.message}`;
+      s.kind === "idle" ? t("status.idle") :
+      s.kind === "polling" ? t("status.polling") :
+      s.kind === "ok" ? t("status.ok", { time: fmt(s.at) }) + (s.remaining !== null ? t("status.remaining", { n: s.remaining }) : "") :
+      s.kind === "paused" ? t("status.paused", { reason: s.reason, time: fmt(s.until) }) :
+      t("status.error", { message: s.message });
   }
 
   /** Play the header sprite once (~1.4 s), matching the tray animation. */

@@ -32,7 +32,7 @@ fn show(app: AppHandle, title: &str, body: &str, url: Option<String>) -> Result<
         .hint(Hint::DesktopEntry("gitbell".into()))
         .hint(Hint::Category("im.received".into()));
     if url.is_some() {
-        n.action("default", "Abrir");
+        n.action("default", crate::i18n::tr("toast.open"));
     }
     let handle = n.show().map_err(crate::err_str)?;
     if let Some(url) = url {

@@ -7,6 +7,7 @@
 // spam you with the last 90 days of activity.
 
 import { endpointFor, fetchEvents, GhError } from "./github";
+import { t } from "./i18n";
 import { toNotice } from "./format";
 import { ringTray, toast } from "../platform/notify";
 import { playSound } from "../platform/sounds";
@@ -95,7 +96,7 @@ export class Poller {
     const { login, targets } = this.settings;
     const token = this.token;
     if (!token) {
-      this.cb.onStatus({ kind: "error", message: "Falta el token de GitHub" });
+      this.cb.onStatus({ kind: "error", message: t("poller.noToken") });
       return;
     }
     if (Date.now() < this.pausedUntil) return;
@@ -121,7 +122,7 @@ export class Poller {
           this.cb.onStatus({
             kind: "paused",
             until: new Date(this.pausedUntil),
-            reason: "Rate limit de GitHub",
+            reason: t("poller.rateLimit"),
           });
           return;
         }
@@ -175,7 +176,7 @@ export class Poller {
     }
     const rest = notices.length - head.length;
     if (rest > 0) {
-      await toast("GitBell", `…y ${rest} evento${rest === 1 ? "" : "s"} más. Abre la app para verlos.`);
+      await toast("GitBell", t(rest === 1 ? "poller.more" : "poller.morePlural", { n: rest }));
     }
   }
 }

@@ -1,6 +1,7 @@
 // Shared shapes. Kept in one file so the rest of the code reads clean.
 
 import type { SoundRef } from "../platform/sounds";
+import { t, type Key, type LangSetting } from "./i18n";
 
 /** Buckets the user can toggle. Each GitHub event type maps into one of these. */
 export type EventCategory =
@@ -24,18 +25,13 @@ export const ALL_CATEGORIES: EventCategory[] = [
   "social",
 ];
 
-export const CATEGORY_LABELS: Record<EventCategory, string> = {
-  push: "Pushes",
-  pr: "Pull requests",
-  review: "Reviews de PR",
-  issue: "Issues",
-  comment: "Comentarios",
-  branch: "Ramas y tags",
-  release: "Releases",
-  social: "Stars, forks, miembros",
-};
+export function categoryLabel(cat: EventCategory): string {
+  return t(`cat.${cat}` as Key);
+}
 
 export interface Settings {
+  /** "auto" follows the OS locale */
+  language: LangSetting;
   /** login resolved from the token, null until verified */
   login: string | null;
   /** "owner/repo", "org:name" or "@me" */
@@ -54,6 +50,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  language: "auto",
   login: null,
   targets: ["@me"],
   events: {
