@@ -38,6 +38,8 @@ the toast. That's it.
   control, or bring your own audio file.
 - **A mascot that rings its bell.** The tray icon plays a short animation when
   something new arrives. Because why not.
+- **`gitbell notify` from any script.** Agents, CI, cron: if it can run a
+  command, it can ring your bell. See below.
 - **Polite polling.** Honors GitHub's `X-Poll-Interval`, uses ETags so
   unchanged polls cost zero rate limit, and backs off automatically when
   throttled.
@@ -99,6 +101,46 @@ directory (`~/.local/share/dev.ejos.gitbell/` on Linux,
 | `org:name` | every repository in an organization you belong to |
 | `@me` | everything you watch or follow (your received-events feed) |
 
+## Notify from scripts and agents 🤖
+
+GitBell doubles as a local notification endpoint. While it's running in the
+tray, any script can make it ring:
+
+```sh
+gitbell notify "Build finished" --body "all 212 tests green" --url https://ci.example.com/run/42
+```
+
+The second process hands its arguments to the running instance and exits;
+you get the toast, the bell animation, the sound and a row in recent
+activity. If GitBell isn't running, the command starts it in the tray and
+shows the toast anyway. Flags: `--body`, `--url` (https only).
+
+This is what makes GitBell useful with coding agents. Claude Code, for
+example, can call it from a [hook](https://code.claude.com/docs/en/hooks)
+every time it finishes a turn, so you know when a task is done even if
+nothing was pushed yet. In `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "gitbell notify \"Claude Code finished\" --body \"$(jq -r .cwd)\""
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Any tool that can run a shell command works the same way: CI scripts, long
+test runs, deploys, cron jobs.
+
 ## Architecture 🧱
 
 ```
@@ -118,6 +160,8 @@ src/                       TypeScript, runs in the webview
 
 src-tauri/src/             Rust, the trusted side
 ├── lib.rs                 builder, plugins, window lifecycle
+├── cli.rs                 `gitbell notify` parsing, forwarded by single-instance
+├── i18n.rs                tray menu and toast button strings
 ├── tray.rs                tray icon, menu, bell animation
 ├── notify.rs              freedesktop toasts with click-to-open
 ├── secrets.rs             keyring get/set/delete

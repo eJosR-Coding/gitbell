@@ -15,7 +15,7 @@ easy to review and easy to land.
 
 | Path | What |
 |---|---|
-| `src-tauri/src/` | Rust: `lib.rs` builder, `tray.rs`, `notify.rs`, `secrets.rs`, `sounds.rs` |
+| `src-tauri/src/` | Rust: `lib.rs` builder, `cli.rs`, `tray.rs`, `notify.rs`, `secrets.rs`, `sounds.rs`, `i18n.rs` |
 | `src/core/` | Pure logic: GitHub client, poller, event formatter, types |
 | `src/platform/` | Wrappers over Tauri commands and plugins |
 | `src/ui/` | Settings window, no framework |
