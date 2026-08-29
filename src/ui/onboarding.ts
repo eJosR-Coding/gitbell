@@ -9,7 +9,7 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { enable as enableAutostart } from "@tauri-apps/plugin-autostart";
 import { toNotice } from "../core/format";
-import { fetchLatestEvent, fetchSuggestions, isValidTarget, whoAmI } from "../core/github";
+import { fetchLatestEvent, fetchSuggestions, isValidTarget, whoAmI, type Profile } from "../core/github";
 import { applyStatic, t } from "../core/i18n";
 import type { Notice, Settings } from "../core/types";
 import { ringTray, toast } from "../platform/notify";
@@ -24,7 +24,7 @@ export interface OnboardingDeps {
   /** persist + hot-swap the poller */
   saveSettings(next: Settings): Promise<void>;
   /** token verified: store it and tell the poller */
-  saveToken(token: string, login: string): Promise<void>;
+  saveToken(token: string, profile: Profile): Promise<void>;
   /** flow finished or skipped */
   onDone(): void;
   ringMascot(): void;
@@ -145,12 +145,12 @@ export class Onboarding {
     status.dataset.kind = "info";
     status.textContent = t("account.verifying");
     try {
-      const login = await whoAmI(token);
+      const profile = await whoAmI(token);
       await setToken(token);
-      await this.d.saveToken(token, login);
+      await this.d.saveToken(token, profile);
       status.dataset.kind = "ok";
-      status.textContent = t("ob.s1.hello", { login });
-      this.say(1, t("ob.s1.hello", { login }));
+      status.textContent = t("ob.s1.hello", { login: profile.login });
+      this.say(1, t("ob.s1.hello", { login: profile.login }));
       this.d.ringMascot();
       $<HTMLInputElement>(r, "#ob-token").value = "";
       // let the greeting land, then move on

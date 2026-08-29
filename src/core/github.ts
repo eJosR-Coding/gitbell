@@ -76,12 +76,18 @@ export async function fetchEvents(
   return { ...base, events };
 }
 
-/** Validate a token by asking who it belongs to. Returns the login. */
-export async function whoAmI(token: string): Promise<string> {
+export interface Profile {
+  login: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+/** Validate a token by asking who it belongs to. */
+export async function whoAmI(token: string): Promise<Profile> {
   const res = await fetch(`${API}/user`, { headers: headers(token) });
   if (!res.ok) throw new GhError(res.status, await res.text().catch(() => ""), null, null);
-  const data = (await res.json()) as { login: string };
-  return data.login;
+  const data = (await res.json()) as { login: string; name: string | null; avatar_url: string | null };
+  return { login: data.login, name: data.name ?? null, avatarUrl: data.avatar_url ?? null };
 }
 
 export class GhError extends Error {

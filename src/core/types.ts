@@ -38,6 +38,9 @@ export interface Settings {
   onboarded: boolean;
   /** login resolved from the token, null until verified */
   login: string | null;
+  /** display name and avatar from /user, for the identity strip */
+  name: string | null;
+  avatarUrl: string | null;
   /** "owner/repo", "org:name" or "@me" */
   targets: string[];
   events: Record<EventCategory, boolean>;
@@ -57,6 +60,8 @@ export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   onboarded: false,
   login: null,
+  name: null,
+  avatarUrl: null,
   targets: ["@me"],
   events: {
     push: true,
