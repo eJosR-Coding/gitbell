@@ -52,6 +52,8 @@ export interface Settings {
   soundsEnabled: boolean;
   /** 0..1 */
   volume: number;
+  /** window tint opacity, 0.3..1. 1 = opaque, no glass */
+  glass: number;
   /** which sound each category plays */
   sounds: Record<EventCategory, SoundRef>;
 }
@@ -78,6 +80,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ignoreOwn: true,
   soundsEnabled: true,
   volume: 0.8,
+  glass: 0.7,
   sounds: {
     push: "sound1",
     pr: "sound2",

@@ -42,6 +42,17 @@ tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 
 [target.'cfg(target_os = "linux")'.dependencies]
+gdk = "0.18"
+gdkwayland-sys = "0.18"
+glib = "0.18"
+gtk = "0.18"
 # direct access to freedesktop hints (app name, desktop-entry, click actions)
 # that tauri-plugin-notification doesn't expose
 notify-rust = "4"
+wayland-backend = { version = "0.3", features = ["client_system"] }
+wayland-client = "0.31"
+wayland-protocols = { version = "0.32", features = ["client", "staging"] }
+wayland-protocols-plasma = { version = "0.3", features = ["client"] }
+
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+window-vibrancy = "0.8"

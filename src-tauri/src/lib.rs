@@ -9,6 +9,7 @@
 //!   sounds  - import user audio files into the app data dir
 
 mod cli;
+mod glass;
 mod i18n;
 mod notify;
 mod secrets;
