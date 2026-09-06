@@ -45,6 +45,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             tray::ring_tray,
+            tray::mark_unread,
             notify::notify,
             secrets::get_token,
             secrets::set_token,
@@ -77,11 +78,14 @@ pub fn run() {
         })
         // "X" on the window means "go to tray", not "kill the app".
         // Quitting for real only happens from the tray menu.
-        .on_window_event(|window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
+        .on_window_event(|window, event| match event {
+            WindowEvent::CloseRequested { api, .. } => {
                 api.prevent_close();
                 let _ = window.hide();
             }
+            // looking at the window clears the tray badge
+            WindowEvent::Focused(true) => tray::clear_unread(window.app_handle()),
+            _ => {}
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

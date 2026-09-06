@@ -9,7 +9,7 @@
 import { endpointFor, fetchEvents, GhError } from "./github";
 import { t } from "./i18n";
 import { toNotice } from "./format";
-import { ringTray, toast } from "../platform/notify";
+import { markUnread, ringTray, toast } from "../platform/notify";
 import { playSound } from "../platform/sounds";
 import { loadLastSeen, saveLastSeen } from "../platform/settings";
 import type { Notice, PollStatus, Settings } from "./types";
@@ -168,6 +168,7 @@ export class Poller {
   private async fire(notices: Notice[]): Promise<void> {
     const { soundsEnabled, sounds, volume } = this.settings;
     ringTray();
+    markUnread(notices.length);
     const head = notices.slice(0, MAX_TOASTS_PER_CYCLE);
     for (const n of head) {
       await toast(n.title, n.body, n.url);

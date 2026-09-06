@@ -1,7 +1,7 @@
 //! Tray icon: the "real" UI of the app. The window is just settings, the
 //! tray is what lives all day.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::Duration;
 
 use crate::i18n::tr;
@@ -26,12 +26,57 @@ const FRAMES: [&[u8]; 8] = [
     include_bytes!("../icons/tray/frame-6.png"),
     include_bytes!("../icons/tray/frame-7.png"),
 ];
+/// Base icon with a red dot: notices arrived while you weren't looking.
+const UNREAD: &[u8] = include_bytes!("../icons/tray/unread.png");
 const FRAME_MS: u64 = 90;
 const RING_LOOPS: usize = 2;
 
 /// True while an animation is playing, so a burst of notices doesn't
 /// spawn five overlapping threads fighting over the icon.
 static RINGING: AtomicBool = AtomicBool::new(false);
+/// Notices the user hasn't seen yet. Cleared when the window gets focus.
+static UNREAD_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+/// The icon that belongs on the tray right now: badge if unread, else logo.
+fn resting_icon(app: &AppHandle) -> Option<Image<'_>> {
+    if UNREAD_COUNT.load(Ordering::Relaxed) > 0 {
+        Image::from_bytes(UNREAD).ok()
+    } else {
+        app.default_window_icon().cloned()
+    }
+}
+
+fn apply_resting(app: &AppHandle) {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        let _ = tray.set_icon(resting_icon(app));
+        let n = UNREAD_COUNT.load(Ordering::Relaxed);
+        let tooltip = if n == 0 { "GitBell".to_string() } else { format!("GitBell · {n}") };
+        let _ = tray.set_tooltip(Some(tooltip));
+    }
+}
+
+/// Frontend calls this with each batch of notices. Only counts as unread
+/// when the window isn't in front of the user.
+#[tauri::command]
+pub fn mark_unread(app: AppHandle, count: usize) {
+    let looking = crate::main_window(&app)
+        .map(|w| w.is_visible().unwrap_or(false) && w.is_focused().unwrap_or(false))
+        .unwrap_or(false);
+    if looking {
+        return;
+    }
+    UNREAD_COUNT.fetch_add(count, Ordering::Relaxed);
+    if !RINGING.load(Ordering::Relaxed) {
+        apply_resting(&app);
+    }
+}
+
+/// Window got focus: the user saw what there was to see.
+pub fn clear_unread(app: &AppHandle) {
+    if UNREAD_COUNT.swap(0, Ordering::Relaxed) > 0 && !RINGING.load(Ordering::Relaxed) {
+        apply_resting(app);
+    }
+}
 
 /// Bring the main window back. Used by the tray, by single-instance and
 /// by the "open" menu item. No-op if the window somehow doesn't exist.
@@ -40,6 +85,9 @@ pub fn show_main_window(app: &AppHandle) {
         let _ = win.show();
         let _ = win.unminimize();
         let _ = win.set_focus();
+        // opening it on purpose counts as having looked, even if the
+        // compositor's focus-stealing prevention swallows set_focus
+        clear_unread(app);
         request_glass(&win);
     }
 }
@@ -135,7 +183,7 @@ pub fn ring_tray(app: AppHandle) {
                 std::thread::sleep(Duration::from_millis(FRAME_MS));
             }
         }
-        let _ = tray.set_icon(app.default_window_icon().cloned());
         RINGING.store(false, Ordering::SeqCst);
+        apply_resting(&app);
     });
 }
