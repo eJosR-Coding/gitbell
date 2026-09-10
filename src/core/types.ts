@@ -13,7 +13,8 @@ export type EventCategory =
   | "branch"
   | "release"
   | "social"
-  | "external";
+  | "external"
+  | "agent";
 
 export const ALL_CATEGORIES: EventCategory[] = [
   "push",
@@ -25,6 +26,7 @@ export const ALL_CATEGORIES: EventCategory[] = [
   "release",
   "social",
   "external",
+  "agent",
 ];
 
 export function categoryLabel(cat: EventCategory): string {
@@ -48,6 +50,8 @@ export interface Settings {
   pollSeconds: number;
   /** skip events where actor === login (you already know what you did) */
   ignoreOwn: boolean;
+  /** ...except when an agent did it under your account (cloud sessions push as you) */
+  agentsOwn: boolean;
   /** master switch for audio */
   soundsEnabled: boolean;
   /** 0..1 */
@@ -75,9 +79,11 @@ export const DEFAULT_SETTINGS: Settings = {
     release: true,
     social: false,
     external: true,
+    agent: true,
   },
   pollSeconds: 60,
   ignoreOwn: true,
+  agentsOwn: true,
   soundsEnabled: true,
   volume: 0.8,
   glass: 0.7,
@@ -91,6 +97,7 @@ export const DEFAULT_SETTINGS: Settings = {
     release: "sound2",
     social: "none",
     external: "sound1",
+    agent: "sound2",
   },
 };
 
@@ -109,6 +116,8 @@ export interface GhEvent {
 export interface Notice {
   id: string;
   category: EventCategory;
+  /** set when a coding agent did it; label like "Claude Code" */
+  agent?: string;
   title: string;
   body: string;
   url: string;

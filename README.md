@@ -43,6 +43,10 @@ the toast. That's it.
   something new arrives. Because why not.
 - **`gitbell notify` from any script.** Agents, CI, cron: if it can run a
   command, it can ring your bell. See below.
+- **Knows when an agent did it.** Commits and PRs from Claude Code, Copilot,
+  Codex, Cursor, OpenCode, Aider, Devin or Jules land in their own category,
+  the toast names the agent, and the click opens the agent's session when the
+  commit carried a link. Honest limits below.
 - **Polite polling.** Honors GitHub's `X-Poll-Interval`, uses ETags so
   unchanged polls cost zero rate limit, and backs off automatically when
   throttled.
@@ -109,6 +113,32 @@ directory (`~/.local/share/dev.ejos.gitbell/` on Linux,
 | `org:name` | every repository in an organization you belong to |
 | `@me` | everything you watch or follow (your received-events feed) |
 
+## Agents 🤖
+
+GitHub has no "an agent did this" flag. GitBell reads the fingerprints the
+tools leave by default: `Co-Authored-By` trailers, session-link trailers
+(`Claude-Session:`, `Agent-Logs-Url:`), bot logins (`copilot-swe-agent[bot]`,
+`claude[bot]`), branch prefixes (`claude/`, `copilot/`, `cursor/`) and PR
+body markers. A hit moves the event to the **Agents** category with its own
+toggle and sound, the toast reads "🤖 Claude Code (@you) pushed to …", and
+the link prefers the agent's session. Your own agents count even with
+"ignore my own activity" on, because cloud sessions push as you.
+
+| Tool | Detected out of the box |
+|---|---|
+| Claude Code (CLI, desktop, web, GitHub Action) | yes |
+| GitHub Copilot coding agent | yes, always |
+| Codex (CLI, app, cloud) | yes |
+| Cursor agent, OpenCode, Aider, Devin, Jules | yes |
+| Gemini CLI, Cline, Roo Code, Kilo Code | no: they don't sign commits |
+
+**The catch:** detection only works when the tool signs. If you turn
+attribution off (every tool lets you), or use a tool that doesn't sign, the
+commit is indistinguishable from yours, for GitBell and for anyone. For
+those cases use the hook below: the agent tells GitBell directly, no git
+forensics involved. Models (DeepSeek, GPT, Claude) are not tools; the mark
+comes from whatever wraps them.
+
 ## Notify from scripts and agents 🤖
 
 GitBell doubles as a local notification endpoint. While it's running in the
@@ -138,6 +168,27 @@ nothing was pushed yet. In `~/.claude/settings.json`:
           {
             "type": "command",
             "command": "gitbell notify \"Claude Code finished\" --body \"$(jq -r .cwd)\""
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+To be told about every commit Claude Code makes, whether or not it signs
+them, hook the `Bash` tool and look for `git commit`:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "in=$(cat); echo \"$in\" | jq -e '.tool_input.command | test(\"git commit\")' >/dev/null && gitbell notify \"Claude Code committed\" --body \"$(echo \"$in\" | jq -r .cwd)\""
           }
         ]
       }
