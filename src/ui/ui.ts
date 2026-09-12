@@ -373,6 +373,10 @@ export class Ui {
       void this.commit({ ...this.settings, pollSeconds: v });
     });
 
+    const agentsOwn = $<HTMLInputElement>("#agents-own");
+    agentsOwn.checked = this.settings.agentsOwn;
+    agentsOwn.addEventListener("change", () => void this.commit({ ...this.settings, agentsOwn: agentsOwn.checked }));
+
     const ignoreOwn = $<HTMLInputElement>("#ignore-own");
     ignoreOwn.checked = this.settings.ignoreOwn;
     ignoreOwn.addEventListener("change", () => void this.commit({ ...this.settings, ignoreOwn: ignoreOwn.checked }));
@@ -493,6 +497,12 @@ export class Ui {
         else img.replaceWith(Object.assign(document.createElement("span"), { className: "notice-dot" }));
         const a = li.querySelector<HTMLAnchorElement>(".notice-title")!;
         a.textContent = n.title;
+        if (n.agent) {
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = n.agent;
+          a.after(" ", tag);
+        }
         if (n.url) {
           a.addEventListener("click", (e) => {
             e.preventDefault();

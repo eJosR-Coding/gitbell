@@ -153,13 +153,17 @@ export class Poller {
 
     if (!last) return []; // first contact: just remember, don't spam
 
-    const { events: wanted, ignoreOwn, login } = this.settings;
+    const { events: wanted, ignoreOwn, agentsOwn, login } = this.settings;
     const out: Notice[] = [];
     for (const ev of events) {
       if (BigInt(ev.id) <= BigInt(last)) break;
-      if (ignoreOwn && login && ev.actor.login === login) continue;
-      const n = toNotice(ev);
+      const n = toNotice(ev, wanted.agent);
       if (!n || !wanted[n.category]) continue;
+      // your own activity is noise... unless an agent did it under your name:
+      // cloud sessions push with your credentials and that's exactly the
+      // "did my agent finish?" moment
+      const mine = !!login && ev.actor.login === login;
+      if (mine && ignoreOwn && !(n.agent && agentsOwn)) continue;
       out.push(n);
     }
     return out;

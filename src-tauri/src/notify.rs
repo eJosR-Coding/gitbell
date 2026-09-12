@@ -10,7 +10,10 @@ use tauri::AppHandle;
 /// webview, and the webview renders content written by strangers on the
 /// internet, so we don't trust it blindly (trust boundary, see SECURITY.md).
 fn is_allowed_url(url: &str) -> bool {
-    url.starts_with("https://github.com/")
+    // GitHub itself plus the places agent sessions live
+    ["https://github.com/", "https://claude.ai/", "https://chatgpt.com/", "https://cursor.com/"]
+        .iter()
+        .any(|p| url.starts_with(p))
 }
 
 #[tauri::command]
@@ -73,6 +76,7 @@ mod tests {
     #[test]
     fn only_github_https() {
         assert!(is_allowed_url("https://github.com/tauri-apps/tauri/pull/1"));
+        assert!(is_allowed_url("https://claude.ai/code/session_01ABC"));
         assert!(!is_allowed_url("http://github.com/x"));
         assert!(!is_allowed_url("https://github.com.evil.io/x"));
         assert!(!is_allowed_url("file:///etc/passwd"));

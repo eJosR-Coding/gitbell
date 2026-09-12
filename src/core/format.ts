@@ -1,6 +1,7 @@
 // GitHub event -> human sentence. This is the file you'll edit most when
 // you want the toasts to say something different.
 
+import { AGENT_LABEL, detectAgent } from "./agents";
 import { t } from "./i18n";
 import type { EventCategory, GhEvent, Notice } from "./types";
 
@@ -28,12 +29,19 @@ const shortRef = (ref: string | undefined) => (ref ?? "").replace(/^refs\/heads\
 const firstLine = (s: string | undefined) => (s ?? "").split("\n")[0].trim();
 const clip = (s: string, n = 90) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
-/** Returns null for event types we don't narrate. */
-export function toNotice(ev: GhEvent): Notice | null {
-  const category = categoryOf(ev.type);
+/**
+ * Returns null for event types we don't narrate. When a coding agent did it
+ * and `agentsEnabled`, the notice moves to the "agent" category, the agent
+ * is named as the actor, and the link prefers the agent's session.
+ */
+export function toNotice(ev: GhEvent, agentsEnabled = true): Notice | null {
+  let category = categoryOf(ev.type);
   if (!category) return null;
 
-  const who = ev.actor.login;
+  const hit = agentsEnabled ? detectAgent(ev) : null;
+  const agentLabel = hit ? AGENT_LABEL[hit.agent] : undefined;
+  if (hit) category = "agent";
+  const who = agentLabel ? `${agentLabel} (@${ev.actor.login})` : ev.actor.login;
   const repo = ev.repo.name;
   const p = ev.payload;
   const repoUrl = `https://github.com/${repo}`;
@@ -142,9 +150,15 @@ export function toNotice(ev: GhEvent): Notice | null {
     }
   }
 
+  if (hit) {
+    title = `🤖 ${title}`;
+    if (hit.sessionUrl) url = hit.sessionUrl;
+  }
+
   return {
     id: ev.id,
     category,
+    agent: agentLabel,
     title,
     body,
     url,
