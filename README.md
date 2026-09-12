@@ -44,6 +44,7 @@ the toast. That's it.
 - **No spam on first run.** Adding a busy organization remembers where it is
   instead of dumping the last 90 days on you.
 - **Starts with your session**, minimized to the tray, if you want it to.
+- **English and Spanish.** Follows your system language, or pick one in settings.
 - **Tiny.** Built with Tauri v2: a few megabytes, not a bundled browser.
 
 ## How it works 🔔
@@ -152,7 +153,12 @@ On Fedora the system libraries are:
 sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel dbus-devel
 ```
 
-Run the Rust unit tests with `cargo test --manifest-path src-tauri/Cargo.toml`.
+Tests:
+
+```sh
+pnpm test                                        # TypeScript core (Vitest)
+cargo test --manifest-path src-tauri/Cargo.toml  # Rust
+```
 
 ## Releasing 🚀
 
@@ -167,7 +173,6 @@ runners and attaches them to a draft release. You don't need a Windows machine.
 ## Roadmap 🗺
 
 - [ ] macOS builds and notarization
-- [ ] English UI and i18n
 - [ ] "Unread" dot on the tray icon until you open the window
 - [ ] Do-not-disturb schedule
 - [ ] Per-branch filters (`main` yes, `feature/*` no)
