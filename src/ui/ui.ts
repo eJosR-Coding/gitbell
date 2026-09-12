@@ -9,7 +9,7 @@ import { setToken } from "../platform/secrets";
 import { isValidTarget, whoAmI } from "../core/github";
 import { ringTray, toast } from "../platform/notify";
 import { BUILTIN_SOUNDS, builtinLabel, customPath, playSound, type BuiltinSoundId, type SoundRef } from "../platform/sounds";
-import { applyStatic, t, type LangSetting } from "../core/i18n";
+import { applyStatic, initLang, t, type LangSetting } from "../core/i18n";
 import {
   ALL_CATEGORIES,
   categoryLabel,
@@ -34,6 +34,7 @@ export interface UiHandlers {
 export class Ui {
   private settings: Settings;
   private recent: Notice[] = [];
+  private lastStatus: PollStatus = { kind: "idle" };
 
   constructor(
     settings: Settings,
@@ -192,9 +193,12 @@ export class Ui {
     const language = $<HTMLSelectElement>("#language");
     language.value = this.settings.language;
     language.addEventListener("change", async () => {
-      await this.commit({ ...this.settings, language: language.value as LangSetting });
-      // simplest correct re-render: reboot the webview. Poller state is on disk.
-      location.reload();
+      const next = language.value as LangSetting;
+      await this.commit({ ...this.settings, language: next });
+      const lang = initLang(next, navigator.language);
+      // Rust owns the tray menu labels; keep it in sync
+      invoke("set_language", { lang }).catch((e) => console.warn("set_language", e));
+      this.rerender();
     });
 
     $("#test-toast").addEventListener("click", async () => {
@@ -308,9 +312,26 @@ export class Ui {
     }
   }
 
+  // ---- language switch ---------------------------------------------------
+
+  /** Repaint every translated string in place. No reload, scroll stays. */
+  private rerender(): void {
+    applyStatic();
+    this.renderEventToggles();
+    this.renderSoundRows();
+    this.renderTargets();
+    this.renderRecent();
+    this.setStatus(this.lastStatus);
+    const input = $<HTMLInputElement>("#token");
+    if (this.hasToken) input.placeholder = t("account.stored");
+    const status = $("#token-status");
+    if (this.settings.login) status.textContent = t("account.connected", { login: this.settings.login });
+  }
+
   // ---- status + activity -------------------------------------------------
 
   setStatus(s: PollStatus): void {
+    this.lastStatus = s;
     const el = $("#status");
     el.dataset.kind = s.kind;
     const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
