@@ -8,6 +8,108 @@
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body>
+    <section id="onboarding" class="ob" hidden data-step="1" aria-label="GitBell onboarding">
+      <div class="ob-top">
+        <div class="ob-progress" id="ob-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+          <i></i><i></i><i></i>
+        </div>
+        <span class="ob-step-label" id="ob-step-label"></span>
+        <button id="ob-skip" class="ob-skip" type="button" data-i18n="ob.skip"></button>
+      </div>
+
+      <!-- step 1: token -->
+      <div class="ob-step" data-step="1">
+        <div class="ob-mascot">
+          <div class="pose" data-pose="wave" aria-hidden="true"></div>
+          <p class="ob-say" data-i18n="ob.s1.say"></p>
+        </div>
+        <div class="ob-body">
+          <h2 class="ob-title" data-i18n="ob.s1.title"></h2>
+          <div id="ob-s1-form">
+            <p class="ob-help" data-i18n-html="ob.s1.help"></p>
+            <div class="ob-token">
+              <input id="ob-token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false" />
+              <button id="ob-verify" type="button" data-i18n="ob.s1.verify"></button>
+            </div>
+            <p id="ob-s1-status" class="ob-status" aria-live="polite"></p>
+            <div class="ob-create">
+              <button id="ob-create-token" type="button" class="ghost" data-i18n="ob.s1.create"></button>
+              <span class="ob-create-hint" data-i18n="ob.s1.createHint"></span>
+            </div>
+          </div>
+          <div id="ob-s1-connected" hidden>
+            <p class="ob-help" id="ob-s1-already"></p>
+            <div class="ob-actions">
+              <button id="ob-s1-next" type="button" data-i18n="ob.next"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- step 2: targets -->
+      <div class="ob-step" data-step="2" hidden>
+        <div class="ob-mascot">
+          <div class="pose" data-pose="think" aria-hidden="true"></div>
+          <p class="ob-say" data-i18n="ob.s2.say"></p>
+        </div>
+        <div class="ob-body">
+          <h2 class="ob-title" data-i18n="ob.s2.title"></h2>
+          <p id="ob-s2-loading" class="ob-help" hidden data-i18n="ob.s2.loading"></p>
+          <div class="ob-group">
+            <div id="ob-me" class="ob-chips"></div>
+          </div>
+          <div class="ob-group">
+            <h3 data-i18n="ob.s2.repos"></h3>
+            <div id="ob-repos" class="ob-chips"></div>
+            <p id="ob-s2-none" class="ob-help" hidden data-i18n="ob.s2.none"></p>
+          </div>
+          <div class="ob-group" id="ob-orgs-block" hidden>
+            <h3 data-i18n="ob.s2.orgs"></h3>
+            <div id="ob-orgs" class="ob-chips"></div>
+          </div>
+          <div class="ob-manual">
+            <input id="ob-manual" spellcheck="false" data-i18n-placeholder="ob.s2.manual" />
+            <button id="ob-manual-add" type="button" class="ghost" data-i18n="targets.add"></button>
+          </div>
+          <div class="ob-actions">
+            <button id="ob-s2-back" type="button" class="ghost" data-i18n="ob.back"></button>
+            <button id="ob-s2-next" type="button" data-i18n="ob.next"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- step 3: first notification -->
+      <div class="ob-step" data-step="3" hidden>
+        <div class="ob-mascot">
+          <div class="pose" data-pose="celebrate" aria-hidden="true"></div>
+          <p class="ob-say"></p>
+        </div>
+        <div class="ob-body">
+          <h2 class="ob-title" data-i18n="ob.s3.title"></h2>
+          <p id="ob-s3-loading" class="ob-help" data-i18n="ob.s3.loading"></p>
+          <div id="ob-latest" class="ob-latest" hidden>
+            <span class="notice-dot"></span>
+            <div>
+              <p class="notice-title" id="ob-latest-title"></p>
+              <p class="notice-body" id="ob-latest-body"></p>
+              <time id="ob-latest-time"></time>
+            </div>
+          </div>
+          <div class="ob-ring">
+            <button id="ob-ring" type="button" data-i18n="ob.s3.ring"></button>
+          </div>
+          <p class="ob-help ob-tray" data-i18n="ob.s3.tray"></p>
+          <label class="toggle">
+            <input id="ob-autostart" type="checkbox" checked /> <span data-i18n="ob.s3.autostart"></span>
+          </label>
+          <div class="ob-actions">
+            <button id="ob-s3-back" type="button" class="ghost" data-i18n="ob.back"></button>
+            <button id="ob-done" type="button" data-i18n="ob.s3.done"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <header class="topbar">
       <div class="brand">
         <div id="mascot" class="mascot" aria-hidden="true"></div>
@@ -81,12 +183,19 @@
             </select>
           </label>
           <button id="test-toast" class="ghost" data-i18n="options.test"></button>
+          <button id="replay-onboarding" class="ghost" data-i18n="ob.replay"></button>
         </div>
       </section>
 
       <section class="card">
         <h2 data-i18n="recent.title"></h2>
-        <p id="recent-empty" class="hint" data-i18n="recent.empty"></p>
+        <div id="recent-empty" class="empty">
+          <div class="pose pose-sm" data-pose="wait" aria-hidden="true"></div>
+          <div>
+            <p class="empty-title" data-i18n="empty.title"></p>
+            <p class="hint" data-i18n="empty.body"></p>
+          </div>
+        </div>
         <ul id="recent" class="recent"></ul>
       </section>
     </main>

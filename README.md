@@ -47,6 +47,7 @@ the toast. That's it.
   instead of dumping the last 90 days on you.
 - **Starts with your session**, minimized to the tray, if you want it to.
 - **English and Spanish.** Follows your system language, or pick one in settings.
+- **Three-step first run.** Token, what to watch (your busiest repos suggested), and a real notification from your own repo. Skippable, replayable from settings.
 - **Tiny.** Built with Tauri v2: a few megabytes, not a bundled browser.
 
 ## How it works 🔔
@@ -196,6 +197,10 @@ On Fedora the system libraries are:
 ```sh
 sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel dbus-devel
 ```
+
+UI preview without Tauri: run `pnpm dev` and open `http://localhost:1420`
+in a browser. `#ob=1`, `#ob=1c`, `#ob=2`, `#ob=3` render each onboarding
+step with fake data; no hash renders the settings view.
 
 Tests:
 

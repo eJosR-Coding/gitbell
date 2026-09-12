@@ -8,9 +8,17 @@ import type { Notice } from "./core/types";
 import { playSound } from "./platform/sounds";
 import { getToken } from "./platform/secrets";
 import { loadRecent, loadSettings, saveRecent, saveSettings } from "./platform/settings";
+import { Onboarding } from "./ui/onboarding";
 import { Ui } from "./ui/ui";
 
 async function boot(): Promise<void> {
+  // `pnpm dev` opened in a plain browser: no Tauri, no keyring, no store.
+  // Render the onboarding with fake data so the UI can be inspected there.
+  if (import.meta.env.DEV && !("__TAURI_INTERNALS__" in window)) {
+    const { preview } = await import("./ui/preview");
+    preview();
+    return;
+  }
   const settings = await loadSettings();
   const recent = await loadRecent();
   // language first: everything rendered after this reads the dictionary
@@ -25,18 +33,45 @@ async function boot(): Promise<void> {
 
   // declared with `let` so the UI handlers can reference it before it's built
   let poller: Poller;
+  let onboarding: Onboarding;
+  let current = settings;
 
   const ui = new Ui(settings, recent, token !== null, {
     async onSettingsChange(next) {
+      current = next;
       await saveSettings(next);
       poller.update(next);
     },
     async onTokenChange(next) {
+      token = next;
       poller.setToken(next);
     },
     onPollNow: () => poller.pollNow(),
+    onReplayOnboarding: () => onboarding.open(),
   });
   ui.mount();
+
+  onboarding = new Onboarding({
+    settings: () => current,
+    token: () => token,
+    async saveSettings(next) {
+      current = next;
+      await saveSettings(next);
+      poller.update(next);
+    },
+    async saveToken(next, login) {
+      token = next;
+      current = { ...current, login };
+      await saveSettings(current);
+      poller.setToken(next);
+    },
+    onDone: () => ui.refresh(current, token !== null),
+    ringMascot: () => ui.ringMascot(),
+  });
+
+  // first run, or an install that predates the flow: step 1 recognizes an
+  // existing token and skips straight to targets, so it costs one click.
+  if (!settings.onboarded) onboarding.open();
 
   poller = new Poller(settings, token, {
     onStatus: (s) => ui.setStatus(s),
