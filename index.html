@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitBell</title>
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div id="mascot" class="mascot" aria-hidden="true"></div>
+        <div>
+          <h1>GitBell</h1>
+          <p id="status" data-kind="idle">En espera</p>
+        </div>
+      </div>
+      <button id="poll-now" class="ghost">Revisar ahora</button>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Cuenta</h2>
+        <p class="hint">
+          Token personal de GitHub con scope <code>repo</code> (para repos privados) y
+          <code>read:org</code>. Se guarda solo en tu máquina.
+        </p>
+        <div class="row">
+          <input id="token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false" />
+          <button id="token-save">Guardar y verificar</button>
+        </div>
+        <p id="token-status" class="hint"></p>
+      </section>
+
+      <section class="card">
+        <h2>Qué vigilar</h2>
+        <p class="hint">
+          <code>owner/repo</code> para un repo, <code>org:nombre</code> para toda una organización,
+          <code>@me</code> para todo lo que sigues o tienes en watch.
+        </p>
+        <div class="row">
+          <input id="target-input" placeholder="tauri-apps/tauri" spellcheck="false" />
+          <button id="target-add">Agregar</button>
+        </div>
+        <ul id="targets" class="chips"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Qué avisar</h2>
+        <div id="events" class="toggles"></div>
+      </section>
+
+      <section class="card">
+        <h2>Sonidos</h2>
+        <div class="options">
+          <label class="toggle">
+            <input id="sounds-enabled" type="checkbox" /> Reproducir sonido con cada aviso
+          </label>
+          <label>
+            Volumen
+            <input id="volume" type="range" min="0" max="100" step="5" />
+          </label>
+        </div>
+        <div id="sound-rows" class="sound-rows"></div>
+      </section>
+
+      <section class="card">
+        <h2>Opciones</h2>
+        <div class="options">
+          <label>
+            Revisar cada
+            <input id="interval" type="number" min="60" step="30" /> s
+          </label>
+          <label class="toggle">
+            <input id="ignore-own" type="checkbox" /> Ignorar lo que hago yo
+          </label>
+          <label class="toggle">
+            <input id="autostart" type="checkbox" /> Iniciar con el sistema
+          </label>
+          <button id="test-toast" class="ghost">Probar notificación</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Actividad reciente</h2>
+        <p id="recent-empty" class="hint">Todavía nada. Cuando alguien haga algo, aparece aquí.</p>
+        <ul id="recent" class="recent"></ul>
+      </section>
+    </main>
+  </body>
+</html>

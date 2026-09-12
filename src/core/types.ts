@@ -1,0 +1,114 @@
+// Shared shapes. Kept in one file so the rest of the code reads clean.
+
+import type { SoundRef } from "../platform/sounds";
+
+/** Buckets the user can toggle. Each GitHub event type maps into one of these. */
+export type EventCategory =
+  | "push"
+  | "pr"
+  | "review"
+  | "issue"
+  | "comment"
+  | "branch"
+  | "release"
+  | "social";
+
+export const ALL_CATEGORIES: EventCategory[] = [
+  "push",
+  "pr",
+  "review",
+  "issue",
+  "comment",
+  "branch",
+  "release",
+  "social",
+];
+
+export const CATEGORY_LABELS: Record<EventCategory, string> = {
+  push: "Pushes",
+  pr: "Pull requests",
+  review: "Reviews de PR",
+  issue: "Issues",
+  comment: "Comentarios",
+  branch: "Ramas y tags",
+  release: "Releases",
+  social: "Stars, forks, miembros",
+};
+
+export interface Settings {
+  /** login resolved from the token, null until verified */
+  login: string | null;
+  /** "owner/repo", "org:name" or "@me" */
+  targets: string[];
+  events: Record<EventCategory, boolean>;
+  /** seconds between polls, GitHub floor is 60 */
+  pollSeconds: number;
+  /** skip events where actor === login (you already know what you did) */
+  ignoreOwn: boolean;
+  /** master switch for audio */
+  soundsEnabled: boolean;
+  /** 0..1 */
+  volume: number;
+  /** which sound each category plays */
+  sounds: Record<EventCategory, SoundRef>;
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  login: null,
+  targets: ["@me"],
+  events: {
+    push: true,
+    pr: true,
+    review: true,
+    issue: true,
+    comment: false,
+    branch: false,
+    release: true,
+    social: false,
+  },
+  pollSeconds: 60,
+  ignoreOwn: true,
+  soundsEnabled: true,
+  volume: 0.8,
+  sounds: {
+    push: "sound1",
+    pr: "sound2",
+    review: "sound2",
+    issue: "sound1",
+    comment: "sound1",
+    branch: "sound1",
+    release: "sound2",
+    social: "none",
+  },
+};
+
+/** Raw event as GitHub's Events API returns it. Only the bits we read. */
+export interface GhEvent {
+  id: string;
+  type: string;
+  actor: { login: string; avatar_url: string };
+  repo: { name: string };
+  // payload shape depends on `type`, we narrow it inside format.ts
+  payload: Record<string, any>;
+  created_at: string;
+}
+
+/** What we actually show: OS toast + row in the activity list. */
+export interface Notice {
+  id: string;
+  category: EventCategory;
+  title: string;
+  body: string;
+  url: string;
+  actor: string;
+  avatar: string;
+  repo: string;
+  at: string;
+}
+
+export type PollStatus =
+  | { kind: "idle" }
+  | { kind: "polling" }
+  | { kind: "ok"; at: Date; remaining: number | null }
+  | { kind: "paused"; until: Date; reason: string }
+  | { kind: "error"; message: string };

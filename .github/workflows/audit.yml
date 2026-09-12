@@ -1,0 +1,23 @@
+# Dependency hygiene: RustSec advisories on every lockfile change + weekly.
+name: audit
+
+on:
+  push:
+    paths: ["src-tauri/Cargo.lock", "src-tauri/Cargo.toml"]
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  cargo-audit:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src-tauri
