@@ -24,6 +24,11 @@ import {
 
 export type View = "activity" | "settings";
 
+/** Push the tint opacity into CSS. 1 = opaque. */
+export function applyGlass(opacity: number): void {
+  document.documentElement.style.setProperty("--glass", String(Math.min(1, Math.max(0.3, opacity))));
+}
+
 const $ = <T extends HTMLElement>(sel: string) => {
   const el = document.querySelector<T>(sel);
   if (!el) throw new Error(`missing element ${sel}`);
@@ -381,6 +386,16 @@ export class Ui {
       }
       await this.syncAutostart();
     });
+
+    const glass = $<HTMLInputElement>("#glass");
+    const glassValue = $<HTMLOutputElement>("#glass-value");
+    const showGlass = (v: number) => { glassValue.value = `${v}%`; };
+    glass.value = String(Math.round(this.settings.glass * 100));
+    showGlass(Number(glass.value));
+    applyGlass(this.settings.glass);
+    // live while dragging, persist on release
+    glass.addEventListener("input", () => { applyGlass(Number(glass.value) / 100); showGlass(Number(glass.value)); });
+    glass.addEventListener("change", () => void this.commit({ ...this.settings, glass: Number(glass.value) / 100 }));
 
     const language = $<HTMLSelectElement>("#language");
     language.value = this.settings.language;
