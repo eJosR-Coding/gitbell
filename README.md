@@ -50,6 +50,10 @@ the toast. That's it.
   instead of dumping the last 90 days on you.
 - **Starts with your session**, minimized to the tray, if you want it to.
 - **English and Spanish.** Follows your system language, or pick one in settings.
+- **Glass.** The window is translucent and asks the compositor to blur what's
+  behind it: KDE Plasma (both the KDE and the new `ext_background_effect`
+  protocols), Windows 11 acrylic, macOS vibrancy. A slider in settings sets
+  the opacity; 100% is opaque. GNOME shows the tint without blur.
 - **Three-step first run.** Token, what to watch (your busiest repos suggested), and a real notification from your own repo. Skippable, replayable from settings.
 - **Tiny.** Built with Tauri v2: a few megabytes, not a bundled browser.
 

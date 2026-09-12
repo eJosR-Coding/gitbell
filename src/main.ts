@@ -9,7 +9,7 @@ import { playSound } from "./platform/sounds";
 import { getToken } from "./platform/secrets";
 import { loadRecent, loadSettings, saveRecent, saveSettings } from "./platform/settings";
 import { Onboarding } from "./ui/onboarding";
-import { Ui } from "./ui/ui";
+import { Ui, applyGlass } from "./ui/ui";
 
 async function boot(): Promise<void> {
   // `pnpm dev` opened in a plain browser: no Tauri, no keyring, no store.
@@ -21,6 +21,7 @@ async function boot(): Promise<void> {
   }
   const settings = await loadSettings();
   const recent = await loadRecent();
+  applyGlass(settings.glass);
   // language first: everything rendered after this reads the dictionary
   const lang = initLang(settings.language, navigator.language);
   invoke("set_language", { lang }).catch((e) => console.warn("set_language", e));

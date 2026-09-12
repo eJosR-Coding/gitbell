@@ -40,6 +40,30 @@ pub fn show_main_window(app: &AppHandle) {
         let _ = win.show();
         let _ = win.unminimize();
         let _ = win.set_focus();
+        request_glass(&win);
+    }
+}
+
+/// Ask the compositor to blur behind the window. GTK realizes the surface
+/// asynchronously after show(), so we wait a beat on the GTK main loop.
+#[cfg(target_os = "linux")]
+fn request_glass(win: &tauri::WebviewWindow) {
+    let w = win.clone();
+    let _ = win.run_on_main_thread(move || {
+        glib::timeout_add_local_once(std::time::Duration::from_millis(250), move || {
+            match crate::glass::enable(&w) {
+                Ok(which) => eprintln!("glass: blur via {which}"),
+                Err(e) => eprintln!("glass: {e}"),
+            }
+        });
+    });
+}
+
+#[cfg(not(target_os = "linux"))]
+fn request_glass(win: &tauri::WebviewWindow) {
+    match crate::glass::enable(win) {
+        Ok(which) => eprintln!("glass: {which}"),
+        Err(e) => eprintln!("glass: {e}"),
     }
 }
 

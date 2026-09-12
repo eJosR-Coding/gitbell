@@ -14,6 +14,10 @@ import { Ui } from "./ui";
 export function preview(): void {
   initLang("auto", navigator.language);
   const hash = new URLSearchParams(location.hash.slice(1));
+  // stand-in for the blurred desktop the compositor would show behind us
+  document.documentElement.style.background =
+    "radial-gradient(60% 50% at 15% 20%, #1ec8c8 0%, transparent 60%), radial-gradient(50% 60% at 85% 80%, #3b5bff 0%, transparent 60%), #0b0d12";
+  if (hash.has("glass")) document.documentElement.style.setProperty("--glass", String(Number(hash.get("glass")) / 100));
   const ob = hash.get("ob");
   const connected = ob?.endsWith("c") ?? false;
   const step = Number((ob ?? "1").replace("c", "")) || 1;
@@ -43,6 +47,7 @@ export function preview(): void {
     token: () => token,
   });
   ui.mount();
+  if (hash.has("glass")) document.documentElement.style.setProperty("--glass", String(Number(hash.get("glass")) / 100));
   ui.setStatus(noToken ? { kind: "error", message: "Falta el token de GitHub" } : { kind: "ok", at: new Date(), remaining: 4987 });
   if (hash.get("view") === "settings") ui.setView("settings");
 
