@@ -62,8 +62,9 @@ sessions) and that any local script can ring.
 - Mascot: a red Git-diamond character holding a golden bell, black limbs,
   big eyes. Assets: `assets/logo.png`, `assets/banner.png`,
   `assets/sprite.png` (8 ringing frames), `src/ui/sprite-strip.png`.
-  Additional poses (wave, waiting, celebrate, error) are promised by the
-  owner and not yet available: reserve slots, don't fabricate.
+  Poses in `assets/poses/` (originals) and `src/ui/poses/` (512px, trimmed):
+  `wave`, `think`, `celebrate`. Still missing: `wait`, `error`. Slots exist
+  for all five; missing ones fall back to the bell frame. Don't fabricate.
 - Voice: close, direct, a little playful; the mascot guides and celebrates,
   never nags.
 - Author: Joseph Rodriguez, GitHub eJosR-Coding. MIT.

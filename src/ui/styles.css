@@ -134,21 +134,20 @@ button:disabled { opacity: 0.5; cursor: default; filter: none; }
 
 /* ===== MASCOT POSES =====
    Every .pose is a slot. `data-pose` names the moment: wave, think,
-   celebrate, wait, error. The real art isn't drawn yet, so all slots show
-   the first bell frame as a stand-in. When the poses arrive, drop them in
-   src/ui/poses/<pose>.png (square, transparent) and uncomment the rules
-   below; nothing in TS/HTML changes. */
+   celebrate, wait, error. Art lives in src/ui/poses/<pose>.png (square,
+   transparent, 512px). Poses without art yet (wait, error) fall back to the
+   first bell frame; add the file and a rule below, nothing in TS/HTML changes. */
 .pose {
-  width: 132px; height: 132px; flex: none;
+  width: 172px; height: 172px; flex: none;
   background: url(./sprite-strip.png) 0 0 / 800% 100% no-repeat;
   filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
 }
 .pose-sm { width: 64px; height: 64px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18)); }
-/* .pose[data-pose="wave"]      { background-image: url(./poses/wave.png);      background-size: contain; }
-   .pose[data-pose="think"]     { background-image: url(./poses/think.png);     background-size: contain; }
-   .pose[data-pose="celebrate"] { background-image: url(./poses/celebrate.png); background-size: contain; }
-   .pose[data-pose="wait"]      { background-image: url(./poses/wait.png);      background-size: contain; }
-   .pose[data-pose="error"]     { background-image: url(./poses/error.png);     background-size: contain; } */
+.pose[data-pose="wave"]      { background-image: url(./poses/wave.png);      background-size: contain; }
+.pose[data-pose="think"]     { background-image: url(./poses/think.png);     background-size: contain; }
+.pose[data-pose="celebrate"] { background-image: url(./poses/celebrate.png); background-size: contain; }
+/* .pose[data-pose="wait"]   { background-image: url(./poses/wait.png);      background-size: contain; }
+   .pose[data-pose="error"]  { background-image: url(./poses/error.png);     background-size: contain; } */
 
 /* ===== onboarding: full-window first-run surface */
 body.onboarding-open { overflow: hidden; }
