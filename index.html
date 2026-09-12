@@ -118,85 +118,130 @@
           <p id="status" data-kind="idle" data-i18n="status.idle"></p>
         </div>
       </div>
-      <button id="poll-now" class="ghost" data-i18n="header.pollNow"></button>
+      <nav class="views" role="tablist" aria-label="Views">
+        <button type="button" role="tab" data-view="activity" aria-selected="true" data-i18n="view.activity"></button>
+        <button type="button" role="tab" data-view="settings" aria-selected="false" data-i18n="view.settings"></button>
+      </nav>
     </header>
 
     <main>
-      <section class="card">
-        <h2 data-i18n="account.title"></h2>
-        <p class="hint" data-i18n-html="account.hint"></p>
-        <div class="row">
-          <input id="token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false" />
-          <button id="token-save" data-i18n="account.save"></button>
-        </div>
-        <p id="token-status" class="hint"></p>
-      </section>
-
-      <section class="card">
-        <h2 data-i18n="targets.title"></h2>
-        <p class="hint" data-i18n-html="targets.hint"></p>
-        <div class="row">
-          <input id="target-input" placeholder="tauri-apps/tauri" spellcheck="false" />
-          <button id="target-add" data-i18n="targets.add"></button>
-        </div>
-        <ul id="targets" class="chips"></ul>
-      </section>
-
-      <section class="card">
-        <h2 data-i18n="events.title"></h2>
-        <div id="events" class="toggles"></div>
-      </section>
-
-      <section class="card">
-        <h2 data-i18n="sounds.title"></h2>
-        <div class="options">
-          <label class="toggle">
-            <input id="sounds-enabled" type="checkbox" /> <span data-i18n="sounds.enabled"></span>
-          </label>
-          <label>
-            <span data-i18n="sounds.volume"></span>
-            <input id="volume" type="range" min="0" max="100" step="5" />
-          </label>
-        </div>
-        <div id="sound-rows" class="sound-rows"></div>
-      </section>
-
-      <section class="card">
-        <h2 data-i18n="options.title"></h2>
-        <div class="options">
-          <label>
-            <span data-i18n="options.interval"></span>
-            <input id="interval" type="number" min="60" step="30" /> <span data-i18n="options.seconds"></span>
-          </label>
-          <label class="toggle">
-            <input id="ignore-own" type="checkbox" /> <span data-i18n="options.ignoreOwn"></span>
-          </label>
-          <label class="toggle">
-            <input id="autostart" type="checkbox" /> <span data-i18n="options.autostart"></span>
-          </label>
-          <label>
-            <span data-i18n="options.language"></span>
-            <select id="language">
-              <option value="auto" data-i18n="lang.auto"></option>
-              <option value="es" data-i18n="lang.es"></option>
-              <option value="en" data-i18n="lang.en"></option>
-            </select>
-          </label>
-          <button id="test-toast" class="ghost" data-i18n="options.test"></button>
-          <button id="replay-onboarding" class="ghost" data-i18n="ob.replay"></button>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2 data-i18n="recent.title"></h2>
-        <div id="recent-empty" class="empty">
-          <div class="pose pose-sm" data-pose="wait" aria-hidden="true"></div>
-          <div>
-            <p class="empty-title" data-i18n="empty.title"></p>
-            <p class="hint" data-i18n="empty.body"></p>
+      <!-- ===== Activity: what happened, who you are ===== -->
+      <section class="view" data-view="activity">
+        <div id="identity" class="identity" hidden>
+          <img id="id-avatar" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="36" height="36">
+          <div class="id-text">
+            <p class="id-name" id="id-name"></p>
+            <p class="id-login"><span data-i18n="id.connectedAs"></span> <b id="id-login"></b></p>
           </div>
+          <button id="poll-now" class="ghost" data-i18n="header.pollNow"></button>
         </div>
-        <ul id="recent" class="recent"></ul>
+        <div id="no-token" class="callout" hidden>
+          <div class="pose pose-sm" data-pose="wait" aria-hidden="true"></div>
+          <div class="callout-text">
+            <p class="callout-title" data-i18n="id.noToken.title"></p>
+            <p class="hint" data-i18n="id.noToken.body"></p>
+          </div>
+          <button id="no-token-cta" data-i18n="id.noToken.cta"></button>
+        </div>
+
+        <section class="card">
+          <h2 data-i18n="recent.title"></h2>
+          <div id="recent-empty" class="empty">
+            <div class="pose pose-sm" data-pose="wait" aria-hidden="true"></div>
+            <div>
+              <p class="empty-title" data-i18n="empty.title"></p>
+              <p class="hint" data-i18n="empty.body"></p>
+            </div>
+          </div>
+          <ul id="recent" class="recent"></ul>
+        </section>
+      </section>
+
+      <!-- ===== Settings ===== -->
+      <section class="view" data-view="settings" hidden>
+        <section class="card">
+          <h2 data-i18n="account.title"></h2>
+          <div id="account-connected" class="account" hidden>
+            <img id="acc-avatar" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="40" height="40">
+            <div class="id-text">
+              <p class="id-name" id="acc-name"></p>
+              <p class="id-login"><span data-i18n="id.connectedAs"></span> <b id="acc-login"></b></p>
+            </div>
+            <div class="account-actions">
+              <button id="acc-change" class="ghost" data-i18n="account.change"></button>
+              <button id="acc-disconnect" class="ghost danger" data-i18n="account.disconnect"></button>
+            </div>
+          </div>
+          <div id="account-form">
+            <p class="hint" data-i18n-html="account.hint"></p>
+            <div class="row">
+              <input id="token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false" />
+              <button id="token-save" data-i18n="account.save"></button>
+              <button id="token-cancel" class="ghost" data-i18n="account.cancel" hidden></button>
+            </div>
+            <p id="token-status" class="hint"></p>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 data-i18n="targets.title"></h2>
+          <h3 class="sub" data-i18n="targets.watching"></h3>
+          <p id="targets-none" class="hint" data-i18n="targets.none" hidden></p>
+          <ul id="targets" class="chips"></ul>
+          <div id="suggestions-block" hidden>
+            <h3 class="sub" data-i18n="targets.suggestions"></h3>
+            <div id="suggestions" class="ob-chips"></div>
+          </div>
+          <div class="row manual">
+            <input id="target-input" spellcheck="false" data-i18n-placeholder="targets.manual" />
+            <button id="target-add" class="ghost" data-i18n="targets.add"></button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 data-i18n="notify.title"></h2>
+          <div class="options">
+            <label class="toggle">
+              <input id="sounds-enabled" type="checkbox" /> <span data-i18n="sounds.enabled"></span>
+            </label>
+            <label>
+              <span data-i18n="sounds.volume"></span>
+              <input id="volume" type="range" min="0" max="100" step="5" />
+            </label>
+          </div>
+          <div class="notify-head">
+            <span></span><span data-i18n="notify.col.on"></span><span data-i18n="notify.col.sound"></span><span></span>
+          </div>
+          <div id="notify-rows" class="notify-rows"></div>
+        </section>
+
+        <section class="card">
+          <h2 data-i18n="options.title"></h2>
+          <div class="options">
+            <label>
+              <span data-i18n="options.interval"></span>
+              <input id="interval" type="number" min="60" step="30" /> <span data-i18n="options.seconds"></span>
+            </label>
+            <label class="toggle">
+              <input id="ignore-own" type="checkbox" /> <span data-i18n="options.ignoreOwn"></span>
+            </label>
+            <label class="toggle">
+              <input id="autostart" type="checkbox" /> <span data-i18n="options.autostart"></span>
+            </label>
+            <label>
+              <span data-i18n="options.language"></span>
+              <select id="language">
+                <option value="auto" data-i18n="lang.auto"></option>
+                <option value="es" data-i18n="lang.es"></option>
+                <option value="en" data-i18n="lang.en"></option>
+              </select>
+            </label>
+          </div>
+          <div class="options actions">
+            <button id="test-toast" class="ghost" data-i18n="options.test"></button>
+            <button id="replay-onboarding" class="ghost" data-i18n="ob.replay"></button>
+          </div>
+        </section>
       </section>
     </main>
   </body>
