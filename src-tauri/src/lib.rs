@@ -8,6 +8,7 @@
 //!   secrets - GitHub token in the OS keyring, never on disk in plaintext
 //!   sounds  - import user audio files into the app data dir
 
+mod cli;
 mod i18n;
 mod notify;
 mod secrets;
@@ -24,8 +25,13 @@ const MINIMIZED_FLAG: &str = "--minimized";
 pub fn run() {
     tauri::Builder::default()
         // second launch? don't spawn a twin, just surface the existing window
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            tray::show_main_window(app);
+        // second launch? either it's `gitbell notify ...` from a script, or
+        // the user double-clicked again: surface the window instead of a twin
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            match cli::parse_notify(&args) {
+                Some(n) => cli::run_notify(app, n),
+                None => tray::show_main_window(app),
+            }
         }))
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
@@ -52,8 +58,18 @@ pub fn run() {
 
             // window starts hidden (see tauri.conf.json). Only show it when
             // the user launched us by hand, not from the autostart entry.
-            let launched_minimized = std::env::args().any(|a| a == MINIMIZED_FLAG);
-            if !launched_minimized {
+            let argv: Vec<String> = std::env::args().collect();
+            let launched_minimized = argv.iter().any(|a| a == MINIMIZED_FLAG);
+
+            // `gitbell notify` with no instance running: we ARE the instance
+            // now. Stay in the tray and fire the toast once the webview is up.
+            if let Some(n) = cli::parse_notify(&argv) {
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(1500));
+                    cli::run_notify(&handle, n);
+                });
+            } else if !launched_minimized {
                 tray::show_main_window(app.handle());
             }
             Ok(())

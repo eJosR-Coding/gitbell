@@ -362,6 +362,10 @@ export class Ui {
     return this.recent;
   }
 
+  currentSettings(): Settings {
+    return this.settings;
+  }
+
   private renderRecent(): void {
     const list = $("#recent");
     const empty = $("#recent-empty");
@@ -378,18 +382,25 @@ export class Ui {
           minute: "2-digit",
         });
         li.innerHTML = `
-          <img src="${n.avatar}&s=64" alt="" width="28" height="28" loading="lazy">
+          <img alt="" width="28" height="28" loading="lazy">
           <div>
             <a href="#" class="notice-title"></a>
             <p class="notice-body"></p>
             <time>${when}</time>
           </div>`;
+        const img = li.querySelector<HTMLImageElement>("img")!;
+        if (n.avatar) img.src = `${n.avatar}&s=64`;
+        else img.replaceWith(Object.assign(document.createElement("span"), { className: "notice-dot" }));
         const a = li.querySelector<HTMLAnchorElement>(".notice-title")!;
         a.textContent = n.title;
-        a.addEventListener("click", (e) => {
-          e.preventDefault();
-          void openUrl(n.url);
-        });
+        if (n.url) {
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            void openUrl(n.url);
+          });
+        } else {
+          a.removeAttribute("href");
+        }
         li.querySelector(".notice-body")!.textContent = n.body;
         return li;
       }),
