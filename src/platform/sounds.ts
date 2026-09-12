@@ -4,14 +4,19 @@
 // autoplay by default, so `new Audio().play()` works without a click.
 
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { t } from "../core/i18n";
 import sound1 from "../assets/sounds/sound1.ogg";
 import sound2 from "../assets/sounds/sound2.ogg";
 
 /** Built-in sounds bundled with the app. Add a file + a row here to extend. */
 export const BUILTIN_SOUNDS = {
-  sound1: { label: "Sonido 1", url: sound1 },
-  sound2: { label: "Sonido 2", url: sound2 },
+  sound1: { n: 1, url: sound1 },
+  sound2: { n: 2, url: sound2 },
 } as const;
+
+export function builtinLabel(id: BuiltinSoundId): string {
+  return t("sounds.builtin", { n: BUILTIN_SOUNDS[id].n });
+}
 
 export type BuiltinSoundId = keyof typeof BUILTIN_SOUNDS;
 

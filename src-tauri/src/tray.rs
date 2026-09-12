@@ -4,6 +4,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
+use crate::i18n::tr;
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
@@ -42,11 +43,23 @@ pub fn show_main_window(app: &AppHandle) {
     }
 }
 
+fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let open = MenuItem::with_id(app, "open", tr("tray.open"), true, None::<&str>)?;
+    let poll = MenuItem::with_id(app, "poll", tr("tray.poll"), true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", tr("tray.quit"), true, None::<&str>)?;
+    Menu::with_items(app, &[&open, &poll, &quit])
+}
+
+/// Swap the menu for one built with the current language.
+pub fn refresh_menu(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        tray.set_menu(Some(build_menu(app)?))?;
+    }
+    Ok(())
+}
+
 pub fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Abrir GitBell", true, None::<&str>)?;
-    let poll = MenuItem::with_id(app, "poll", "Revisar ahora", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &poll, &quit])?;
+    let menu = build_menu(app)?;
 
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(app.default_window_icon().cloned().expect("bundle icon missing"))

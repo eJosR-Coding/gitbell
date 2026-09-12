@@ -28,9 +28,16 @@ easy to review and easy to land.
   `types.ts` so users can toggle it.
 - Anything the webview sends to Rust is untrusted input: validate it in the
   command (see `notify.rs`, `sounds.rs`).
-- Run `pnpm exec tsc --noEmit` and `cargo test --manifest-path src-tauri/Cargo.toml`
-  before opening a PR. CI runs the same.
-- Comments in English. UI strings are Spanish for now; i18n is on the roadmap.
+- Run `pnpm exec tsc --noEmit`, `pnpm test` and
+  `cargo test --manifest-path src-tauri/Cargo.toml` before opening a PR.
+  CI runs the same.
+- Comments in English. Every user-visible string goes through `t()` in
+  `src/core/i18n.ts` and must exist in both `es` and `en`; the i18n test
+  fails otherwise. Rust has its own tiny table in `src-tauri/src/i18n.rs`
+  for the tray menu and toast button.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
+  (`feat:`, `fix:`, `docs:`, `ci:`, `refactor:`, `test:`). Work on a branch,
+  open a PR against `main`, CI must be green, squash-merge.
 
 ## Reporting bugs
 

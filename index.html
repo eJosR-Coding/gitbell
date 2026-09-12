@@ -13,52 +13,46 @@
         <div id="mascot" class="mascot" aria-hidden="true"></div>
         <div>
           <h1>GitBell</h1>
-          <p id="status" data-kind="idle">En espera</p>
+          <p id="status" data-kind="idle" data-i18n="status.idle"></p>
         </div>
       </div>
-      <button id="poll-now" class="ghost">Revisar ahora</button>
+      <button id="poll-now" class="ghost" data-i18n="header.pollNow"></button>
     </header>
 
     <main>
       <section class="card">
-        <h2>Cuenta</h2>
-        <p class="hint">
-          Token personal de GitHub con scope <code>repo</code> (para repos privados) y
-          <code>read:org</code>. Se guarda solo en tu máquina.
-        </p>
+        <h2 data-i18n="account.title"></h2>
+        <p class="hint" data-i18n-html="account.hint"></p>
         <div class="row">
           <input id="token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false" />
-          <button id="token-save">Guardar y verificar</button>
+          <button id="token-save" data-i18n="account.save"></button>
         </div>
         <p id="token-status" class="hint"></p>
       </section>
 
       <section class="card">
-        <h2>Qué vigilar</h2>
-        <p class="hint">
-          <code>owner/repo</code> para un repo, <code>org:nombre</code> para toda una organización,
-          <code>@me</code> para todo lo que sigues o tienes en watch.
-        </p>
+        <h2 data-i18n="targets.title"></h2>
+        <p class="hint" data-i18n-html="targets.hint"></p>
         <div class="row">
           <input id="target-input" placeholder="tauri-apps/tauri" spellcheck="false" />
-          <button id="target-add">Agregar</button>
+          <button id="target-add" data-i18n="targets.add"></button>
         </div>
         <ul id="targets" class="chips"></ul>
       </section>
 
       <section class="card">
-        <h2>Qué avisar</h2>
+        <h2 data-i18n="events.title"></h2>
         <div id="events" class="toggles"></div>
       </section>
 
       <section class="card">
-        <h2>Sonidos</h2>
+        <h2 data-i18n="sounds.title"></h2>
         <div class="options">
           <label class="toggle">
-            <input id="sounds-enabled" type="checkbox" /> Reproducir sonido con cada aviso
+            <input id="sounds-enabled" type="checkbox" /> <span data-i18n="sounds.enabled"></span>
           </label>
           <label>
-            Volumen
+            <span data-i18n="sounds.volume"></span>
             <input id="volume" type="range" min="0" max="100" step="5" />
           </label>
         </div>
@@ -66,25 +60,33 @@
       </section>
 
       <section class="card">
-        <h2>Opciones</h2>
+        <h2 data-i18n="options.title"></h2>
         <div class="options">
           <label>
-            Revisar cada
-            <input id="interval" type="number" min="60" step="30" /> s
+            <span data-i18n="options.interval"></span>
+            <input id="interval" type="number" min="60" step="30" /> <span data-i18n="options.seconds"></span>
           </label>
           <label class="toggle">
-            <input id="ignore-own" type="checkbox" /> Ignorar lo que hago yo
+            <input id="ignore-own" type="checkbox" /> <span data-i18n="options.ignoreOwn"></span>
           </label>
           <label class="toggle">
-            <input id="autostart" type="checkbox" /> Iniciar con el sistema
+            <input id="autostart" type="checkbox" /> <span data-i18n="options.autostart"></span>
           </label>
-          <button id="test-toast" class="ghost">Probar notificación</button>
+          <label>
+            <span data-i18n="options.language"></span>
+            <select id="language">
+              <option value="auto" data-i18n="lang.auto"></option>
+              <option value="es" data-i18n="lang.es"></option>
+              <option value="en" data-i18n="lang.en"></option>
+            </select>
+          </label>
+          <button id="test-toast" class="ghost" data-i18n="options.test"></button>
         </div>
       </section>
 
       <section class="card">
-        <h2>Actividad reciente</h2>
-        <p id="recent-empty" class="hint">Todavía nada. Cuando alguien haga algo, aparece aquí.</p>
+        <h2 data-i18n="recent.title"></h2>
+        <p id="recent-empty" class="hint" data-i18n="recent.empty"></p>
         <ul id="recent" class="recent"></ul>
       </section>
     </main>

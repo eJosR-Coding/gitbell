@@ -8,6 +8,7 @@
 //!   secrets - GitHub token in the OS keyring, never on disk in plaintext
 //!   sounds  - import user audio files into the app data dir
 
+mod i18n;
 mod notify;
 mod secrets;
 mod sounds;
@@ -42,8 +43,11 @@ pub fn run() {
             secrets::set_token,
             secrets::delete_token,
             sounds::import_sound,
+            i18n::set_language,
         ])
         .setup(|app| {
+            // system locale until the webview reports the user's setting
+            i18n::set(i18n::Lang::system());
             tray::build_tray(app.handle())?;
 
             // window starts hidden (see tauri.conf.json). Only show it when
