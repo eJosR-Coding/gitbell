@@ -12,7 +12,8 @@ export type EventCategory =
   | "comment"
   | "branch"
   | "release"
-  | "social";
+  | "social"
+  | "external";
 
 export const ALL_CATEGORIES: EventCategory[] = [
   "push",
@@ -23,6 +24,7 @@ export const ALL_CATEGORIES: EventCategory[] = [
   "branch",
   "release",
   "social",
+  "external",
 ];
 
 export function categoryLabel(cat: EventCategory): string {
@@ -62,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
     branch: false,
     release: true,
     social: false,
+    external: true,
   },
   pollSeconds: 60,
   ignoreOwn: true,
@@ -76,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
     branch: "sound1",
     release: "sound2",
     social: "none",
+    external: "sound1",
   },
 };
 

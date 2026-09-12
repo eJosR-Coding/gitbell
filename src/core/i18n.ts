@@ -42,6 +42,7 @@ const dict = {
     "cat.branch": "Ramas y tags",
     "cat.release": "Releases",
     "cat.social": "Stars, forks, miembros",
+    "cat.external": "Avisos externos (gitbell notify)",
     // sounds
     "sounds.title": "Sonidos",
     "sounds.enabled": "Reproducir sonido con cada aviso",
@@ -134,6 +135,7 @@ const dict = {
     "cat.branch": "Branches and tags",
     "cat.release": "Releases",
     "cat.social": "Stars, forks, members",
+    "cat.external": "External notices (gitbell notify)",
     "sounds.title": "Sounds",
     "sounds.enabled": "Play a sound with every notification",
     "sounds.volume": "Volume",

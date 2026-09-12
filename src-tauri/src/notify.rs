@@ -19,6 +19,12 @@ pub fn notify(app: AppHandle, title: String, body: String, url: Option<String>) 
     show(app, &title, &body, url)
 }
 
+/// Same toast, but for input that already comes from a trusted local
+/// source (the CLI). URL scheme was checked by the caller.
+pub fn show_trusted(app: AppHandle, title: &str, body: &str, url: Option<String>) -> Result<(), String> {
+    show(app, title, body, url)
+}
+
 #[cfg(target_os = "linux")]
 fn show(app: AppHandle, title: &str, body: &str, url: Option<String>) -> Result<(), String> {
     use notify_rust::{Hint, Notification};
