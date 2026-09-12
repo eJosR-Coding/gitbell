@@ -18,7 +18,12 @@ easy to review and easy to land.
 | `src-tauri/src/` | Rust: `lib.rs` builder, `cli.rs`, `tray.rs`, `notify.rs`, `secrets.rs`, `sounds.rs`, `i18n.rs` |
 | `src/core/` | Pure logic: GitHub client, poller, event formatter, types |
 | `src/platform/` | Wrappers over Tauri commands and plugins |
-| `src/ui/` | Settings window, no framework |
+| `src/ui/` | Settings window and onboarding, no framework. `preview.ts` boots them in a plain browser with fake data |
+
+## Product and design context
+
+`PRODUCT.md` holds the product truth (users, purpose, constraints, brand
+commitments) that UI work must respect. Read it before touching `src/ui`.
 
 ## Guidelines
 

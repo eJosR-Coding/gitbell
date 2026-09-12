@@ -34,6 +34,8 @@ export function categoryLabel(cat: EventCategory): string {
 export interface Settings {
   /** "auto" follows the OS locale */
   language: LangSetting;
+  /** first-run flow completed or skipped */
+  onboarded: boolean;
   /** login resolved from the token, null until verified */
   login: string | null;
   /** "owner/repo", "org:name" or "@me" */
@@ -53,6 +55,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
+  onboarded: false,
   login: null,
   targets: ["@me"],
   events: {

@@ -29,6 +29,7 @@ export interface UiHandlers {
   onSettingsChange(next: Settings): Promise<void>;
   onTokenChange(token: string): Promise<void>;
   onPollNow(): void;
+  onReplayOnboarding(): void;
 }
 
 export class Ui {
@@ -57,6 +58,7 @@ export class Ui {
     this.renderTargets();
     this.renderRecent();
     $("#poll-now").addEventListener("click", () => this.h.onPollNow());
+    $("#replay-onboarding").addEventListener("click", () => this.h.onReplayOnboarding());
     void this.syncAutostart();
   }
 
@@ -364,6 +366,13 @@ export class Ui {
 
   currentSettings(): Settings {
     return this.settings;
+  }
+
+  /** Called when onboarding changed settings/token behind our back. */
+  refresh(settings: Settings, hasToken: boolean): void {
+    this.settings = settings;
+    this.hasToken = hasToken;
+    this.rerender();
   }
 
   private renderRecent(): void {

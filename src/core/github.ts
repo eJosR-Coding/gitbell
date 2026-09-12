@@ -98,3 +98,35 @@ export class GhError extends Error {
     return (this.status === 403 || this.status === 429) && this.remaining === 0;
   }
 }
+
+export interface Suggestions {
+  /** "owner/repo", most recently pushed first */
+  repos: string[];
+  /** "org:name" */
+  orgs: string[];
+}
+
+/** Smart defaults for onboarding: the user's busiest repos and their orgs. */
+export async function fetchSuggestions(token: string): Promise<Suggestions> {
+  const get = async (path: string) => {
+    const res = await fetch(`${API}${path}`, { headers: headers(token) });
+    if (!res.ok) throw new GhError(res.status, await res.text().catch(() => ""), null, null);
+    return res.json();
+  };
+  const [repos, orgs] = await Promise.all([
+    get("/user/repos?sort=pushed&per_page=8&affiliation=owner,collaborator,organization_member") as Promise<{ full_name: string }[]>,
+    get("/user/orgs?per_page=10") as Promise<{ login: string }[]>,
+  ]);
+  return {
+    repos: repos.map((r) => r.full_name),
+    orgs: orgs.map((o) => `org:${o.login}`),
+  };
+}
+
+/** The newest event of a target, already as a raw event. Null when quiet. */
+export async function fetchLatestEvent(target: string, token: string, login: string | null): Promise<GhEvent | null> {
+  const url = endpointFor(target, login);
+  if (!url) return null;
+  const r = await fetchEvents(`${url}?per_page=10`, token, null);
+  return r.events?.[0] ?? null;
+}

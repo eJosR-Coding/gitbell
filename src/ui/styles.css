@@ -26,6 +26,8 @@
 }
 
 * { box-sizing: border-box; }
+/* author display rules must never resurrect an element the DOM hid */
+[hidden] { display: none !important; }
 body {
   margin: 0;
   background: var(--bg);
@@ -121,3 +123,123 @@ input[type="range"] { accent-color: var(--accent); width: 140px; vertical-align:
   to   { background-position: -352px 0; }
 }
 .notice-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--line); display: inline-block; margin-top: 2px; }
+
+/* ===== browser surfaces: the parts we didn't draw still carry the design */
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+button:disabled { opacity: 0.5; cursor: default; filter: none; }
+
+/* ===== MASCOT POSES =====
+   Every .pose is a slot. `data-pose` names the moment: wave, think,
+   celebrate, wait, error. The real art isn't drawn yet, so all slots show
+   the first bell frame as a stand-in. When the poses arrive, drop them in
+   src/ui/poses/<pose>.png (square, transparent) and uncomment the rules
+   below; nothing in TS/HTML changes. */
+.pose {
+  width: 132px; height: 132px; flex: none;
+  background: url(./sprite-strip.png) 0 0 / 800% 100% no-repeat;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
+}
+.pose-sm { width: 64px; height: 64px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18)); }
+/* .pose[data-pose="wave"]      { background-image: url(./poses/wave.png);      background-size: contain; }
+   .pose[data-pose="think"]     { background-image: url(./poses/think.png);     background-size: contain; }
+   .pose[data-pose="celebrate"] { background-image: url(./poses/celebrate.png); background-size: contain; }
+   .pose[data-pose="wait"]      { background-image: url(./poses/wait.png);      background-size: contain; }
+   .pose[data-pose="error"]     { background-image: url(./poses/error.png);     background-size: contain; } */
+
+/* ===== onboarding: full-window first-run surface */
+body.onboarding-open { overflow: hidden; }
+.ob {
+  position: fixed; inset: 0; z-index: 10;
+  background: var(--bg);
+  display: grid; grid-template-rows: auto 1fr;
+  overflow-y: auto;
+}
+.ob-top {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+  padding: 18px 28px 0;
+}
+.ob-progress { display: flex; gap: 6px; }
+.ob-progress i { width: 26px; height: 4px; border-radius: 999px; background: var(--line); transition: background 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+.ob[data-step="1"] .ob-progress i:nth-child(-n+1),
+.ob[data-step="2"] .ob-progress i:nth-child(-n+2),
+.ob[data-step="3"] .ob-progress i:nth-child(-n+3) { background: var(--accent); }
+.ob-step-label { color: var(--muted); font-size: 12px; }
+.ob-skip { background: transparent; color: var(--muted); padding: 6px 8px; font-size: 12.5px; }
+.ob-skip:hover { color: var(--text); filter: none; }
+
+.ob-step {
+  display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px;
+  align-content: start; align-items: start;
+  width: min(100%, 720px); margin: 0 auto; padding: 36px 28px 40px;
+  animation: ob-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ob[data-dir="back"] .ob-step { animation-name: ob-in-back; }
+.ob[data-dir="none"] .ob-step { animation: none; }
+@keyframes ob-in      { from { opacity: 0; transform: translateX(14px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes ob-in-back { from { opacity: 0; transform: translateX(-14px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-step { animation: none; } }
+
+.ob-mascot { display: grid; justify-items: center; gap: 14px; padding-top: 6px; }
+.ob-say {
+  position: relative; text-align: center; font-size: 13.5px; line-height: 1.5;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+.ob-say::before {
+  content: ""; position: absolute; top: -7px; left: 50%; width: 12px; height: 12px;
+  background: var(--card); border-left: 1px solid var(--line); border-top: 1px solid var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.ob-title { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.2; color: var(--text); text-transform: none; margin: 4px 0 14px; text-wrap: balance; }
+.ob-help { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 14px; max-width: 52ch; }
+.ob-token { display: flex; gap: 8px; }
+.ob-token input { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.04em; }
+.ob-status { min-height: 20px; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.ob-status[data-kind="error"] { color: var(--err); }
+.ob-status[data-kind="ok"] { color: var(--ok); }
+.ob-create { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+.ob-create-hint { color: var(--muted); font-size: 12px; }
+
+.ob-group { margin-bottom: 16px; }
+.ob-group h3 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 8px; letter-spacing: 0.02em; }
+.ob-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ob-chip {
+  background: var(--card); color: var(--text); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 14px; font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  transition: background 160ms, border-color 160ms, color 160ms;
+}
+.ob-chip:hover { border-color: var(--muted); filter: none; }
+.ob-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+#ob-me .ob-chip { font-family: inherit; }
+.ob-manual { display: flex; gap: 8px; margin-top: 6px; }
+.ob-manual input { flex: 1; }
+.ob-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+
+.ob-latest {
+  display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+.ob-latest .notice-title { font-weight: 600; }
+.ob-latest time { color: var(--muted); font-size: 11px; }
+.ob-ring { margin: 16px 0 18px; }
+.ob-ring button { padding: 10px 18px; font-weight: 600; }
+.ob-tray { margin-bottom: 10px; }
+
+@media (max-width: 620px) {
+  .ob-step { grid-template-columns: 1fr; gap: 18px; padding: 24px 20px 32px; }
+  .ob-mascot { grid-template-columns: auto 1fr; justify-items: start; align-items: center; }
+  .pose { width: 84px; height: 84px; }
+  .ob-say::before { top: 50%; left: -7px; transform: translateY(-50%) rotate(-45deg); }
+}
+
+/* ===== empty state: the mascot waits, not a gray line */
+.empty { display: flex; align-items: center; gap: 14px; padding: 8px 4px; }
+.empty-title { font-weight: 600; margin-bottom: 2px; }
+.empty .hint { margin: 0; }
