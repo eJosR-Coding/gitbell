@@ -17,3 +17,8 @@ export async function toast(title: string, body: string, url?: string): Promise<
 export function ringTray(): void {
   invoke("ring_tray").catch((e) => console.warn("ring_tray failed", e));
 }
+
+/** Tell the tray how many notices just arrived; Rust decides if they're unread. */
+export function markUnread(count: number): void {
+  invoke("mark_unread", { count }).catch((e) => console.warn("mark_unread failed", e));
+}

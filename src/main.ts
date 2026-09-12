@@ -5,6 +5,7 @@ import { listen } from "@tauri-apps/api/event";
 import { initLang } from "./core/i18n";
 import { Poller } from "./core/poller";
 import type { Notice } from "./core/types";
+import { markUnread } from "./platform/notify";
 import { playSound } from "./platform/sounds";
 import { getToken } from "./platform/secrets";
 import { loadRecent, loadSettings, saveRecent, saveSettings } from "./platform/settings";
@@ -103,6 +104,7 @@ async function boot(): Promise<void> {
     };
     const s = ui.currentSettings();
     if (s.events.external) {
+      markUnread(1);
       ui.pushNotices([n]);
       void saveRecent(ui.getRecent());
       if (s.soundsEnabled) void playSound(s.sounds.external, s.volume);
