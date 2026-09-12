@@ -28,8 +28,11 @@ the toast. That's it.
 
 - **Native toasts** on Linux (freedesktop) and Windows (WinRT). Clicking a
   toast on Linux opens the commit, PR or issue on GitHub.
-- **Tray-first.** The window is only for settings. Close it and GitBell keeps
-  watching from the tray. Left click reopens it, right click for the menu.
+- **Tray-first.** Close the window and GitBell keeps watching from the tray.
+  Left click reopens it, right click for the menu.
+- **Activity first.** The window opens on what happened in your repos, with
+  who you're connected as. Settings live one tab over, and every event
+  category has its toggle and sound on the same row.
 - **Watch what you want.** A single repo (`owner/repo`), a whole organization
   (`org:name`) or everything you watch and follow (`@me`).
 - **Pick your events.** Pushes, pull requests, reviews, issues, comments,
@@ -200,7 +203,8 @@ sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel d
 
 UI preview without Tauri: run `pnpm dev` and open `http://localhost:1420`
 in a browser. `#ob=1`, `#ob=1c`, `#ob=2`, `#ob=3` render each onboarding
-step with fake data; no hash renders the settings view.
+step with fake data; `#view=settings` the settings view; `#notoken` the
+asleep state; no hash the activity view with sample notices.
 
 Tests:
 

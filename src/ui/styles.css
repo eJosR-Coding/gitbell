@@ -242,3 +242,49 @@ body.onboarding-open { overflow: hidden; }
 .empty { display: flex; align-items: center; gap: 14px; padding: 8px 4px; }
 .empty-title { font-weight: 600; margin-bottom: 2px; }
 .empty .hint { margin: 0; }
+
+/* ===== views: segmented control in the header */
+.views { display: inline-flex; padding: 3px; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; }
+.views [role="tab"] {
+  background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 6px; font-weight: 500;
+  transition: background 160ms, color 160ms, box-shadow 160ms;
+}
+.views [role="tab"]:hover { filter: none; color: var(--text); }
+.views [role="tab"][aria-selected="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.view { display: grid; gap: 14px; }
+
+/* ===== identity strip on Activity */
+.identity, .account { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+.identity { padding: 4px 2px; }
+.identity img, .account img { border-radius: 50%; background: var(--line); }
+.id-text { min-width: 0; }
+.id-name { font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.id-login { color: var(--muted); font-size: 12.5px; }
+.id-login b { font-weight: 600; color: var(--text); }
+.account-actions { display: flex; gap: 8px; }
+button.danger { color: var(--err); }
+button.danger:hover { border-color: var(--err); }
+
+/* ===== callout: asleep, no token */
+.callout {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+}
+.callout-title { font-weight: 600; margin-bottom: 2px; }
+.callout .hint { margin: 0; }
+
+/* ===== targets in settings */
+h3.sub { font-size: 12px; font-weight: 600; color: var(--muted); margin: 10px 0 6px; letter-spacing: 0.02em; }
+.chips { margin-top: 4px; }
+.row.manual { margin-top: 14px; }
+
+/* ===== notifications table: one row per category */
+.notify-head, .notify-row { display: grid; grid-template-columns: 1fr 64px minmax(160px, 220px) 34px; gap: 8px; align-items: center; }
+.notify-head { margin-top: 14px; padding: 0 0 6px; color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid var(--line); }
+.notify-head span:nth-child(2) { text-align: center; }
+.notify-rows { display: grid; }
+.notify-row { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.notify-row:last-child { border-bottom: 0; }
+.notify-row .toggle { justify-content: center; padding: 0; }
+.notify-row[data-off="true"] > span:first-child, .notify-row[data-off="true"] select, .notify-row[data-off="true"] .icon { opacity: 0.5; }
+.options.actions { margin-top: 12px; }

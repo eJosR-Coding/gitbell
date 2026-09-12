@@ -1,12 +1,15 @@
 // DOM glue. No framework: the page is small enough that querySelector + a
-// few render functions beat pulling in React for a settings screen.
+// few render functions beat pulling in React.
+//
+// Two views live in one document: "activity" (what happened, who you are)
+// and "settings". Sections carry data-view and only one is shown at a time.
 
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { invoke } from "@tauri-apps/api/core";
 import { open as pickFile } from "@tauri-apps/plugin-dialog";
-import { setToken } from "../platform/secrets";
-import { isValidTarget, whoAmI } from "../core/github";
+import { deleteToken, setToken } from "../platform/secrets";
+import { fetchSuggestions, isValidTarget, whoAmI, type Suggestions } from "../core/github";
 import { ringTray, toast } from "../platform/notify";
 import { BUILTIN_SOUNDS, builtinLabel, customPath, playSound, type BuiltinSoundId, type SoundRef } from "../platform/sounds";
 import { applyStatic, initLang, t, type LangSetting } from "../core/i18n";
@@ -19,6 +22,8 @@ import {
   type Settings,
 } from "../core/types";
 
+export type View = "activity" | "settings";
+
 const $ = <T extends HTMLElement>(sel: string) => {
   const el = document.querySelector<T>(sel);
   if (!el) throw new Error(`missing element ${sel}`);
@@ -27,15 +32,18 @@ const $ = <T extends HTMLElement>(sel: string) => {
 
 export interface UiHandlers {
   onSettingsChange(next: Settings): Promise<void>;
-  onTokenChange(token: string): Promise<void>;
+  /** null = disconnected */
+  onTokenChange(token: string | null): Promise<void>;
   onPollNow(): void;
   onReplayOnboarding(): void;
+  token(): string | null;
 }
 
 export class Ui {
   private settings: Settings;
   private recent: Notice[] = [];
   private lastStatus: PollStatus = { kind: "idle" };
+  private suggestions: Suggestions | null = null;
 
   constructor(
     settings: Settings,
@@ -49,29 +57,99 @@ export class Ui {
 
   mount(): void {
     applyStatic();
-    this.renderEventToggles();
-    this.bindToken();
+    this.bindViews();
+    this.bindAccount();
     this.bindTargets();
+    this.bindNotify();
     this.bindOptions();
-    this.bindSounds();
-    this.renderSoundRows();
-    this.renderTargets();
-    this.renderRecent();
+    this.renderAll();
     $("#poll-now").addEventListener("click", () => this.h.onPollNow());
+    $("#no-token-cta").addEventListener("click", () => {
+      this.setView("settings");
+      $<HTMLInputElement>("#token").focus();
+    });
     $("#replay-onboarding").addEventListener("click", () => this.h.onReplayOnboarding());
     void this.syncAutostart();
   }
 
-  // ---- token -------------------------------------------------------------
+  /** Everything derived from state, in one place. Cheap enough to call often. */
+  private renderAll(): void {
+    this.renderIdentity();
+    this.renderTargets();
+    this.renderNotifyRows();
+    this.renderRecent();
+    this.setStatus(this.lastStatus);
+  }
 
-  private bindToken(): void {
+  // ---- views -------------------------------------------------------------
+
+  private bindViews(): void {
+    document.querySelectorAll<HTMLButtonElement>(".views [data-view]").forEach((b) => {
+      b.addEventListener("click", () => this.setView(b.dataset.view as View));
+    });
+    this.setView("activity");
+  }
+
+  setView(view: View): void {
+    document.body.dataset.view = view;
+    document.querySelectorAll<HTMLElement>("main .view").forEach((s) => {
+      s.hidden = s.dataset.view !== view;
+    });
+    document.querySelectorAll<HTMLButtonElement>(".views [data-view]").forEach((b) => {
+      b.setAttribute("aria-selected", String(b.dataset.view === view));
+    });
+    if (view === "settings") void this.loadSuggestions();
+    window.scrollTo({ top: 0 });
+  }
+
+  // ---- identity (activity strip + account card) --------------------------
+
+  private renderIdentity(): void {
+    const { login, name, avatarUrl } = this.settings;
+    const connected = this.hasToken && !!login;
+    $("#identity").hidden = !connected;
+    $("#no-token").hidden = connected;
+    $("#account-connected").hidden = !connected;
+    $("#account-form").hidden = connected && !this.changingToken;
+    $("#token-cancel").hidden = !connected;
+    if (connected) {
+      for (const [img, nameEl, loginEl] of [["#id-avatar", "#id-name", "#id-login"], ["#acc-avatar", "#acc-name", "#acc-login"]]) {
+        const i = $<HTMLImageElement>(img);
+        i.hidden = !avatarUrl;
+        if (avatarUrl) i.src = `${avatarUrl}&s=96`;
+        $(nameEl).textContent = name || login!;
+        $(loginEl).textContent = `@${login}`;
+      }
+    }
+  }
+
+  private changingToken = false;
+
+  private bindAccount(): void {
     const input = $<HTMLInputElement>("#token");
     const status = $("#token-status");
-    // never echo the stored token back into the DOM; a placeholder is enough
-    if (this.hasToken) input.placeholder = t("account.stored");
-    if (this.settings.login) status.textContent = t("account.connected", { login: this.settings.login });
 
-    $("#token-save").addEventListener("click", async () => {
+    $("#acc-change").addEventListener("click", () => {
+      this.changingToken = true;
+      this.renderIdentity();
+      input.focus();
+    });
+    $("#token-cancel").addEventListener("click", () => {
+      this.changingToken = false;
+      input.value = "";
+      status.textContent = "";
+      this.renderIdentity();
+    });
+    $("#acc-disconnect").addEventListener("click", async () => {
+      await deleteToken();
+      this.hasToken = false;
+      this.suggestions = null;
+      await this.h.onTokenChange(null);
+      await this.commit({ ...this.settings, login: null, name: null, avatarUrl: null });
+      this.renderAll();
+    });
+
+    const save = async () => {
       const token = input.value.trim();
       if (!token) {
         status.textContent = t("account.pasteFirst");
@@ -79,17 +157,23 @@ export class Ui {
       }
       status.textContent = t("account.verifying");
       try {
-        const login = await whoAmI(token);
+        const profile = await whoAmI(token);
         await setToken(token);
         await this.h.onTokenChange(token);
         this.hasToken = true;
+        this.changingToken = false;
+        this.suggestions = null;
         input.value = "";
-        input.placeholder = t("account.stored");
-        status.textContent = t("account.connected", { login });
-        await this.commit({ ...this.settings, login });
+        status.textContent = "";
+        await this.commit({ ...this.settings, ...profile });
+        this.renderAll();
       } catch (e) {
         status.textContent = t("account.invalid", { error: e instanceof Error ? e.message : String(e) });
       }
+    };
+    $("#token-save").addEventListener("click", () => void save());
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") void save();
     });
   }
 
@@ -105,10 +189,7 @@ export class Ui {
         return;
       }
       input.setCustomValidity("");
-      if (!this.settings.targets.includes(value)) {
-        await this.commit({ ...this.settings, targets: [...this.settings.targets, value] });
-        this.renderTargets();
-      }
+      await this.addTarget(value);
       input.value = "";
     };
     $("#target-add").addEventListener("click", () => void add());
@@ -117,111 +198,71 @@ export class Ui {
     });
   }
 
+  private async addTarget(target: string): Promise<void> {
+    if (this.settings.targets.includes(target)) return;
+    await this.commit({ ...this.settings, targets: [...this.settings.targets, target] });
+    this.renderTargets();
+  }
+
+  private async removeTarget(target: string): Promise<void> {
+    await this.commit({ ...this.settings, targets: this.settings.targets.filter((x) => x !== target) });
+    this.renderTargets();
+  }
+
+  private async loadSuggestions(): Promise<void> {
+    const token = this.h.token();
+    if (this.suggestions || !token) return;
+    try {
+      this.suggestions = await fetchSuggestions(token);
+    } catch (e) {
+      console.warn("suggestions", e);
+      this.suggestions = { repos: [], orgs: [] };
+    }
+    this.renderTargets();
+  }
+
   private renderTargets(): void {
-    const list = $("#targets");
-    list.replaceChildren(
-      ...this.settings.targets.map((target) => {
+    const watching = this.settings.targets;
+    $("#targets-none").hidden = watching.length > 0;
+    $("#targets").replaceChildren(
+      ...watching.map((target) => {
         const li = document.createElement("li");
         li.className = "chip";
         const name = document.createElement("span");
-        name.textContent = target;
+        name.textContent = target === "@me" ? t("ob.s2.me") : target;
         const remove = document.createElement("button");
         remove.textContent = "×";
         remove.title = t("targets.remove", { target });
         remove.setAttribute("aria-label", remove.title);
-        remove.addEventListener("click", async () => {
-          await this.commit({
-            ...this.settings,
-            targets: this.settings.targets.filter((x) => x !== target),
-          });
-          this.renderTargets();
-        });
+        remove.addEventListener("click", () => void this.removeTarget(target));
         li.append(name, remove);
         return li;
       }),
     );
-  }
-
-  // ---- event categories --------------------------------------------------
-
-  private renderEventToggles(): void {
-    const grid = $("#events");
-    grid.replaceChildren(
-      ...ALL_CATEGORIES.map((cat) => {
-        const label = document.createElement("label");
-        label.className = "toggle";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = this.settings.events[cat];
-        cb.addEventListener("change", () =>
-          void this.commit({
-            ...this.settings,
-            events: { ...this.settings.events, [cat]: cb.checked },
-          }),
-        );
-        label.append(cb, document.createTextNode(categoryLabel(cat)));
-        return label;
+    // suggestions the user isn't watching yet, one click to add
+    const pool = ["@me", ...(this.suggestions?.repos ?? []), ...(this.suggestions?.orgs ?? [])]
+      .filter((x) => !watching.includes(x));
+    $("#suggestions-block").hidden = pool.length === 0;
+    $("#suggestions").replaceChildren(
+      ...pool.map((target) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ob-chip";
+        b.textContent = target === "@me" ? t("ob.s2.me") : target;
+        b.addEventListener("click", () => void this.addTarget(target));
+        return b;
       }),
     );
   }
 
-  // ---- options -----------------------------------------------------------
+  // ---- notifications: category toggle + sound in one row -----------------
 
-  private bindOptions(): void {
-    const interval = $<HTMLInputElement>("#interval");
-    interval.value = String(this.settings.pollSeconds);
-    interval.addEventListener("change", () => {
-      const v = Math.max(60, Number(interval.value) || 60);
-      interval.value = String(v);
-      void this.commit({ ...this.settings, pollSeconds: v });
-    });
-
-    const ignoreOwn = $<HTMLInputElement>("#ignore-own");
-    ignoreOwn.checked = this.settings.ignoreOwn;
-    ignoreOwn.addEventListener("change", () =>
-      void this.commit({ ...this.settings, ignoreOwn: ignoreOwn.checked }),
-    );
-
-    $<HTMLInputElement>("#autostart").addEventListener("change", async (e) => {
-      const on = (e.target as HTMLInputElement).checked;
-      try {
-        on ? await enable() : await disable();
-      } catch (err) {
-        console.error("autostart", err);
-      }
-      await this.syncAutostart();
-    });
-
-    const language = $<HTMLSelectElement>("#language");
-    language.value = this.settings.language;
-    language.addEventListener("change", async () => {
-      const next = language.value as LangSetting;
-      await this.commit({ ...this.settings, language: next });
-      const lang = initLang(next, navigator.language);
-      // Rust owns the tray menu labels; keep it in sync
-      invoke("set_language", { lang }).catch((e) => console.warn("set_language", e));
-      this.rerender();
-    });
-
-    $("#test-toast").addEventListener("click", async () => {
-      ringTray();
-      this.ringMascot();
-      await toast(t("test.title"), t("test.body"), "https://github.com");
-      if (this.settings.soundsEnabled) {
-        await playSound(this.settings.sounds.push, this.settings.volume);
-      }
-    });
-  }
-
-  // ---- sounds ------------------------------------------------------------
-
-  private bindSounds(): void {
+  private bindNotify(): void {
     const enabled = $<HTMLInputElement>("#sounds-enabled");
     enabled.checked = this.settings.soundsEnabled;
     enabled.addEventListener("change", () =>
       void this.commit({ ...this.settings, soundsEnabled: enabled.checked }),
     );
-
     const volume = $<HTMLInputElement>("#volume");
     volume.value = String(Math.round(this.settings.volume * 100));
     // save on release, not on every pixel of drag
@@ -230,26 +271,36 @@ export class Ui {
     );
   }
 
-  /** One row per category: <select> of sounds + preview + custom file picker. */
-  private renderSoundRows(): void {
-    const list = $("#sound-rows");
-    list.replaceChildren(
+  private renderNotifyRows(): void {
+    $("#notify-rows").replaceChildren(
       ...ALL_CATEGORIES.map((cat) => {
+        const on = this.settings.events[cat];
         const current = this.settings.sounds[cat];
         const custom = customPath(current);
 
         const row = document.createElement("div");
-        row.className = "sound-row";
+        row.className = "notify-row";
+        row.dataset.off = String(!on);
 
         const name = document.createElement("span");
         name.textContent = categoryLabel(cat);
 
+        const toggle = document.createElement("label");
+        toggle.className = "toggle";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = on;
+        cb.setAttribute("aria-label", categoryLabel(cat));
+        cb.addEventListener("change", async () => {
+          await this.commit({ ...this.settings, events: { ...this.settings.events, [cat]: cb.checked } });
+          row.dataset.off = String(!cb.checked);
+        });
+        toggle.append(cb);
+
         const select = document.createElement("select");
         const opts: [SoundRef | "custom", string][] = [
           ["none", t("sounds.none")],
-          ...(Object.keys(BUILTIN_SOUNDS) as BuiltinSoundId[]).map(
-            (id) => [id, builtinLabel(id)] as [SoundRef, string],
-          ),
+          ...(Object.keys(BUILTIN_SOUNDS) as BuiltinSoundId[]).map((id) => [id, builtinLabel(id)] as [SoundRef, string]),
           ["custom", custom ? t("sounds.file", { name: custom.split("/").pop() ?? "" }) : t("sounds.pick")],
         ];
         for (const [value, label] of opts) {
@@ -259,6 +310,7 @@ export class Ui {
           select.append(o);
         }
         select.value = custom ? "custom" : current;
+        select.setAttribute("aria-label", `${t("notify.col.sound")}: ${categoryLabel(cat)}`);
         select.addEventListener("change", async () => {
           if (select.value !== "custom") {
             await this.setSound(cat, select.value as SoundRef);
@@ -281,20 +333,19 @@ export class Ui {
               select.value = custom ? "custom" : current;
             }
           } else {
-            // user cancelled the dialog, snap the select back
-            select.value = custom ? "custom" : current;
+            select.value = custom ? "custom" : current; // dialog cancelled
           }
         });
 
         const play = document.createElement("button");
+        play.type = "button";
         play.className = "ghost icon";
         play.title = t("sounds.play");
-        play.textContent = "▶";
-        play.addEventListener("click", () =>
-          void playSound(this.settings.sounds[cat], this.settings.volume),
-        );
+        play.setAttribute("aria-label", `${t("sounds.play")}: ${categoryLabel(cat)}`);
+        play.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5v9l8-4.5z" fill="currentColor"/></svg>';
+        play.addEventListener("click", () => void playSound(this.settings.sounds[cat], this.settings.volume));
 
-        row.append(name, select, play);
+        row.append(name, toggle, select, play);
         return row;
       }),
     );
@@ -302,8 +353,53 @@ export class Ui {
 
   private async setSound(cat: EventCategory, ref: SoundRef): Promise<void> {
     await this.commit({ ...this.settings, sounds: { ...this.settings.sounds, [cat]: ref } });
-    this.renderSoundRows();
+    this.renderNotifyRows();
     void playSound(ref, this.settings.volume);
+  }
+
+  // ---- options -----------------------------------------------------------
+
+  private bindOptions(): void {
+    const interval = $<HTMLInputElement>("#interval");
+    interval.value = String(this.settings.pollSeconds);
+    interval.addEventListener("change", () => {
+      const v = Math.max(60, Number(interval.value) || 60);
+      interval.value = String(v);
+      void this.commit({ ...this.settings, pollSeconds: v });
+    });
+
+    const ignoreOwn = $<HTMLInputElement>("#ignore-own");
+    ignoreOwn.checked = this.settings.ignoreOwn;
+    ignoreOwn.addEventListener("change", () => void this.commit({ ...this.settings, ignoreOwn: ignoreOwn.checked }));
+
+    $<HTMLInputElement>("#autostart").addEventListener("change", async (e) => {
+      const on = (e.target as HTMLInputElement).checked;
+      try {
+        on ? await enable() : await disable();
+      } catch (err) {
+        console.error("autostart", err);
+      }
+      await this.syncAutostart();
+    });
+
+    const language = $<HTMLSelectElement>("#language");
+    language.value = this.settings.language;
+    language.addEventListener("change", async () => {
+      const next = language.value as LangSetting;
+      await this.commit({ ...this.settings, language: next });
+      const lang = initLang(next, navigator.language);
+      // Rust owns the tray menu labels; keep it in sync
+      invoke("set_language", { lang }).catch((e) => console.warn("set_language", e));
+      applyStatic();
+      this.renderAll();
+    });
+
+    $("#test-toast").addEventListener("click", async () => {
+      ringTray();
+      this.ringMascot();
+      await toast(t("test.title"), t("test.body"), "https://github.com");
+      if (this.settings.soundsEnabled) await playSound(this.settings.sounds.push, this.settings.volume);
+    });
   }
 
   private async syncAutostart(): Promise<void> {
@@ -312,22 +408,6 @@ export class Ui {
     } catch {
       /* not supported in this env, leave unchecked */
     }
-  }
-
-  // ---- language switch ---------------------------------------------------
-
-  /** Repaint every translated string in place. No reload, scroll stays. */
-  private rerender(): void {
-    applyStatic();
-    this.renderEventToggles();
-    this.renderSoundRows();
-    this.renderTargets();
-    this.renderRecent();
-    this.setStatus(this.lastStatus);
-    const input = $<HTMLInputElement>("#token");
-    if (this.hasToken) input.placeholder = t("account.stored");
-    const status = $("#token-status");
-    if (this.settings.login) status.textContent = t("account.connected", { login: this.settings.login });
   }
 
   // ---- status + activity -------------------------------------------------
@@ -355,8 +435,7 @@ export class Ui {
 
   pushNotices(notices: Notice[]): void {
     this.ringMascot();
-    // newest on top
-    this.recent = [...notices].reverse().concat(this.recent).slice(0, 40);
+    this.recent = [...notices].reverse().concat(this.recent).slice(0, 40); // newest on top
     this.renderRecent();
   }
 
@@ -372,26 +451,23 @@ export class Ui {
   refresh(settings: Settings, hasToken: boolean): void {
     this.settings = settings;
     this.hasToken = hasToken;
-    this.rerender();
+    this.suggestions = null;
+    applyStatic();
+    this.renderAll();
+    this.setView("activity");
   }
 
   private renderRecent(): void {
     const list = $("#recent");
-    const empty = $("#recent-empty");
-    empty.hidden = this.recent.length > 0;
+    $("#recent-empty").hidden = this.recent.length > 0;
     list.replaceChildren(
       ...this.recent.map((n) => {
         const li = document.createElement("li");
         li.className = "notice";
         li.dataset.category = n.category;
-        const when = new Date(n.at).toLocaleString([], {
-          day: "2-digit",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        const when = new Date(n.at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
         li.innerHTML = `
-          <img alt="" width="28" height="28" loading="lazy">
+          <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="28" height="28" loading="lazy">
           <div>
             <a href="#" class="notice-title"></a>
             <p class="notice-body"></p>

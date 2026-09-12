@@ -48,6 +48,7 @@ async function boot(): Promise<void> {
     },
     onPollNow: () => poller.pollNow(),
     onReplayOnboarding: () => onboarding.open(),
+    token: () => token,
   });
   ui.mount();
 
@@ -59,9 +60,9 @@ async function boot(): Promise<void> {
       await saveSettings(next);
       poller.update(next);
     },
-    async saveToken(next, login) {
+    async saveToken(next, profile) {
       token = next;
-      current = { ...current, login };
+      current = { ...current, ...profile };
       await saveSettings(current);
       poller.setToken(next);
     },
