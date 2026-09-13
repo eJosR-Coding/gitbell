@@ -1,6 +1,6 @@
 [package]
 name = "gitbell"
-version = "0.1.0"
+version = "0.2.0"
 description = "Desktop notifications for GitHub activity"
 authors = ["eJosR-Coding"]
 edition = "2021"

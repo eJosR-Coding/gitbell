@@ -280,11 +280,17 @@ runners and attaches them to a draft release. You don't need a Windows machine.
 
 ## Roadmap 🗺
 
+- [x] Spanish and English UI
+- [x] `gitbell notify` for scripts and agents
+- [x] First-run onboarding, activity-first window, glass
+- [x] Unread dot on the tray icon
+- [x] Agent detection
+- [ ] Signed auto-updates
+- [ ] Public repo, AUR and winget packages, then COPR and apt
+- [ ] Instant mode: webhooks through a tiny relay instead of polling
 - [ ] macOS builds and notarization
-- [ ] "Unread" dot on the tray icon until you open the window
 - [ ] Do-not-disturb schedule
 - [ ] Per-branch filters (`main` yes, `feature/*` no)
-- [ ] Optional in-app toast window with the animated mascot
 
 ## Contributing 💬
 
