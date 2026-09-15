@@ -98,7 +98,8 @@ organization activity.
 
 1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Scopes: `repo` (private repositories) and `read:org` (organization events)
-3. Paste it into GitBell → **Cuenta** → **Guardar y verificar**
+3. Paste it into the first-run flow, or later in **Settings → Account**.
+   GitBell can also open the token page for you with the scopes pre-checked.
 
 The token goes straight into your OS keyring (KWallet / GNOME Keyring on
 Linux, Credential Manager on Windows). Settings live in the app data
@@ -208,20 +209,24 @@ src/                       TypeScript, runs in the webview
 │   ├── github.ts          Events API client: ETag, X-Poll-Interval, rate limit
 │   ├── poller.ts          the loop, dedupe by last seen event id
 │   ├── format.ts          GitHub event → toast title/body/url
+│   ├── agents.ts          coding-agent fingerprints (trailers, bots, branches)
+│   ├── i18n.ts            typed dictionary, es/en
 │   └── types.ts           shared shapes and defaults
 ├── platform/              thin wrappers over Tauri commands and plugins
 │   ├── secrets.ts         token in the OS keyring
 │   ├── settings.ts        JSON store for settings and state
 │   ├── notify.ts          toasts and tray animation
 │   └── sounds.ts          audio playback
-├── ui/                    settings window, no framework
+├── ui/                    activity + settings window, onboarding, no framework
+│   └── preview.ts         boots the UI in a plain browser with fake data
 └── main.ts                wires the three layers together
 
 src-tauri/src/             Rust, the trusted side
 ├── lib.rs                 builder, plugins, window lifecycle
 ├── cli.rs                 `gitbell notify` parsing, forwarded by single-instance
 ├── i18n.rs                tray menu and toast button strings
-├── tray.rs                tray icon, menu, bell animation
+├── tray.rs                tray icon, menu, bell animation, unread badge
+├── glass.rs               asks the compositor to blur behind the window
 ├── notify.rs              freedesktop toasts with click-to-open
 ├── secrets.rs             keyring get/set/delete
 └── sounds.rs              validated import of user audio files
@@ -268,10 +273,24 @@ pnpm test                                        # TypeScript core (Vitest)
 cargo test --manifest-path src-tauri/Cargo.toml  # Rust
 ```
 
+## Known limitations ⚠️
+
+- **Windows installers aren't code-signed yet.** SmartScreen shows "Windows
+  protected your PC"; choose *More info → Run anyway*. Signing is on the
+  roadmap.
+- **Blur behind the window needs a compositor that offers it.** KDE Plasma,
+  Windows 11 and macOS do. GNOME shows the tint only.
+- **Events arrive with GitHub's own delay** (30 s to a few minutes) and
+  GitHub asks not to poll faster than once a minute. Instant delivery via
+  webhooks is on the roadmap.
+- **Agent detection needs the tool to sign its commits.** Tools that don't
+  (Gemini CLI, Cline and friends) or users who turned attribution off are
+  invisible; use `gitbell notify` from a hook for those.
+
 ## Releasing 🚀
 
 ```sh
-git tag v0.1.0
+git tag v0.3.0
 git push --tags
 ```
 
