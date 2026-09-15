@@ -49,9 +49,11 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
   position: sticky; top: 0; z-index: 1;
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 20px;
-  background: color-mix(in srgb, var(--card) calc(var(--glass, 0.7) * 100%), transparent);
+  /* content scrolls underneath: keep the bar nearly opaque whatever the
+     glass slider says, or text bleeds through the logo */
+  background: color-mix(in srgb, var(--card) calc(max(var(--glass, 0.7), 0.94) * 100%), transparent);
   border-bottom: 1px solid var(--glass-line);
-  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2); backdrop-filter: blur(24px) saturate(1.2);
 }
 #status { color: var(--muted); font-size: 12px; }
 #status::before {
