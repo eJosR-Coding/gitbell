@@ -36,7 +36,7 @@ export function preview(): void {
   const recent = noToken ? [] : [
     { id: "4", category: "agent" as const, agent: "Claude Code", title: "🤖 Claude Code (@eJosR-Coding) abrió PR #14 en eJosR-Coding/gitbell", body: "feat(agents): detect coding agents", url: "https://claude.ai/code/session_01X", actor: "eJosR-Coding", avatar: "https://avatars.githubusercontent.com/u/9919?v=4", repo: "eJosR-Coding/gitbell", at: new Date(Date.now() - 3 * 60e3).toISOString() },
     { id: "3", category: "pr" as const, title: "ana abrió PR #12 en eJosR-Coding/gitbell", body: "feat(home): activity first, settings second", url: "https://github.com/eJosR-Coding/gitbell/pull/12", actor: "ana", avatar: "https://avatars.githubusercontent.com/u/583231?v=4", repo: "eJosR-Coding/gitbell", at: new Date(Date.now() - 12 * 60e3).toISOString() },
-    { id: "2", category: "external" as const, title: "Claude Code terminó", body: "/home/ejos/Documents/proyectos_code/gitbell", url: "", actor: "cli", avatar: "", repo: "", at: new Date(Date.now() - 55 * 60e3).toISOString() },
+    { id: "2", category: "external" as const, title: "Claude Code terminó", body: "~/projects/gitbell", url: "", actor: "cli", avatar: "", repo: "", at: new Date(Date.now() - 55 * 60e3).toISOString() },
     { id: "1", category: "push" as const, title: "ana hizo push a eJosR-Coding/gitbell", body: "2 commits en main: feat(i18n): spanish and english UI", url: "https://github.com/eJosR-Coding/gitbell", actor: "ana", avatar: "https://avatars.githubusercontent.com/u/583231?v=4", repo: "eJosR-Coding/gitbell", at: new Date(Date.now() - 7200e3).toISOString() },
   ];
 
