@@ -38,7 +38,7 @@ fn show(app: AppHandle, title: &str, body: &str, url: Option<String>) -> Result<
         .summary(title)
         .body(body)
         .icon("gitbell")
-        .hint(Hint::DesktopEntry("gitbell".into()))
+        .hint(Hint::DesktopEntry("GitBell".into())) // matches the bundler's GitBell.desktop
         .hint(Hint::Category("im.received".into()));
     if url.is_some() {
         n.action("default", crate::i18n::tr("toast.open"));

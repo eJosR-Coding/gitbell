@@ -43,6 +43,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Your commits, noticed.",
+    "longDescription": "Native desktop notifications for GitHub activity and coding agents. Lives in the tray, rings when someone pushes, opens a PR, reviews or releases in the repos you watch."
   }
 }
