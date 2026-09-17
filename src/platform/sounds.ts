@@ -44,12 +44,36 @@ function urlFor(ref: SoundRef): string | null {
   return path ? convertFileSrc(path) : null;
 }
 
+/**
+ * WebKitGTK's media element can't stream from Tauri's custom protocols
+ * (tauri://, asset://) in packaged builds, even though fetch() over them
+ * works fine. So: fetch the bytes once, hand the element a blob: URL.
+ */
+const blobCache = new Map<string, string>();
+
+async function playableUrl(url: string): Promise<string> {
+  const cached = blobCache.get(url);
+  if (cached) return cached;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`sound ${res.status}`);
+  const blobUrl = URL.createObjectURL(await res.blob());
+  blobCache.set(url, blobUrl);
+  return blobUrl;
+}
+
 /** Fire and forget. Resolves when playback ends so callers can stagger toasts. */
-export function playSound(ref: SoundRef, volume: number): Promise<void> {
+export async function playSound(ref: SoundRef, volume: number): Promise<void> {
   const url = urlFor(ref);
-  if (!url) return Promise.resolve();
+  if (!url) return;
+  let src: string;
+  try {
+    src = await playableUrl(url);
+  } catch (e) {
+    console.warn("sound load failed", ref, e);
+    return;
+  }
   return new Promise((resolve) => {
-    const a = new Audio(url);
+    const a = new Audio(src);
     a.volume = Math.min(1, Math.max(0, volume));
     a.addEventListener("ended", () => resolve(), { once: true });
     a.addEventListener("error", () => {
