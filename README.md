@@ -14,6 +14,7 @@ noun
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%20v2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
 ![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows-lightgrey)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-ejosjos31-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/ejosjos31)
 
 GitBell is a lightweight desktop app that lives in your system tray and pops a
 **native notification** the moment someone pushes, opens a pull request,
@@ -23,6 +24,10 @@ about.
 No server, no webhooks, no browser tab left open. Your machine asks GitHub
 directly with your own token, once a minute, and the operating system shows
 the toast. That's it.
+
+<p align="center">
+  <img src="assets/screenshots/settings.png" alt="GitBell settings: one row per event category with its toggle and sound, over a glass window on KDE Plasma" width="640">
+</p>
 
 ## Features ⭐
 
@@ -319,7 +324,11 @@ for the project layout and a few ground rules.
 ## Support GitBell 💗
 
 If GitBell saves you from refreshing GitHub one more time, a ⭐ on the repo
-goes a long way.
+goes a long way. And if it saved you more than that:
+
+<a href="https://buymeacoffee.com/ejosjos31" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48">
+</a>
 
 ## License
 
