@@ -6,6 +6,19 @@ import type { GhEvent } from "./types";
 
 const API = "https://api.github.com";
 
+/** A request that never answers must not freeze the poll loop. */
+const TIMEOUT_MS = 20_000;
+
+async function timedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: ctl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Turn a user-facing target string into the endpoint we hit. */
 export function endpointFor(target: string, login: string | null): string | null {
   if (target === "@me") {
@@ -54,7 +67,7 @@ export async function fetchEvents(
   token: string,
   etag: string | null,
 ): Promise<FetchResult> {
-  const res = await fetch(url, { headers: headers(token, etag) });
+  const res = await timedFetch(url, { headers: headers(token, etag) });
   const num = (k: string) => {
     const v = res.headers.get(k);
     return v === null ? null : Number(v);
@@ -84,7 +97,7 @@ export interface Profile {
 
 /** Validate a token by asking who it belongs to. */
 export async function whoAmI(token: string): Promise<Profile> {
-  const res = await fetch(`${API}/user`, { headers: headers(token) });
+  const res = await timedFetch(`${API}/user`, { headers: headers(token) });
   if (!res.ok) throw new GhError(res.status, await res.text().catch(() => ""), null, null);
   const data = (await res.json()) as { login: string; name: string | null; avatar_url: string | null };
   return { login: data.login, name: data.name ?? null, avatarUrl: data.avatar_url ?? null };
@@ -115,7 +128,7 @@ export interface Suggestions {
 /** Smart defaults for onboarding: the user's busiest repos and their orgs. */
 export async function fetchSuggestions(token: string): Promise<Suggestions> {
   const get = async (path: string) => {
-    const res = await fetch(`${API}${path}`, { headers: headers(token) });
+    const res = await timedFetch(`${API}${path}`, { headers: headers(token) });
     if (!res.ok) throw new GhError(res.status, await res.text().catch(() => ""), null, null);
     return res.json();
   };
