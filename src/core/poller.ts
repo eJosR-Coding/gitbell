@@ -6,7 +6,7 @@
 // record its newest id and notify nothing, otherwise a fresh install would
 // spam you with the last 90 days of activity.
 
-import { endpointFor, fetchEvents, GhError } from "./github";
+import { endpointFor, enrichPushEvent, fetchEvents, GhError } from "./github";
 import { t } from "./i18n";
 import { toNotice } from "./format";
 import { markUnread, ringTray, toast } from "../platform/notify";
@@ -116,7 +116,7 @@ export class Poller {
         if (r.remaining !== null) remaining = r.remaining;
         if (!r.events) continue; // 304, nothing new
 
-        fresh.push(...this.diff(target, r.events));
+        fresh.push(...(await this.diff(target, r.events, token)));
       } catch (e) {
         if (e instanceof GhError && e.isRateLimited && e.resetAt) {
           this.pausedUntil = e.resetAt * 1000 + 1000;
@@ -153,7 +153,7 @@ export class Poller {
   }
 
   /** Returns notices for events newer than what we've seen for this target. */
-  private diff(target: string, events: import("./types").GhEvent[]): Notice[] {
+  private async diff(target: string, events: import("./types").GhEvent[], token: string): Promise<Notice[]> {
     if (events.length === 0) return [];
     const newest = events[0].id; // API returns newest first
     const last = this.lastSeen[target];
@@ -163,8 +163,15 @@ export class Poller {
 
     const { events: wanted, ignoreOwn, agentsOwn, login } = this.settings;
     const out: Notice[] = [];
+    let enriched = 0;
     for (const ev of events) {
       if (BigInt(ev.id) <= BigInt(last)) break;
+      // slim PushEvents: one compare call gives count, messages, authors
+      // (needed for the body and for agent trailers). Bounded per cycle.
+      if (ev.type === "PushEvent" && enriched < 10) {
+        enriched++;
+        await enrichPushEvent(ev, token);
+      }
       const n = toNotice(ev, wanted.agent);
       if (!n || !wanted[n.category]) continue;
       // your own activity is noise... unless an agent did it under your name:

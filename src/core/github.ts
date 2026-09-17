@@ -149,3 +149,29 @@ export async function fetchLatestEvent(target: string, token: string, login: str
   const r = await fetchEvents(`${url}?per_page=10`, token, null);
   return r.events?.[0] ?? null;
 }
+
+/**
+ * GitHub's Events API stopped including `size` and `commits` in PushEvent
+ * payloads (only before/head/ref remain). One compare call restores the
+ * commit count, messages and authors, which the formatter and the agent
+ * detector need. Mutates the event in place; failures leave it slim.
+ */
+export async function enrichPushEvent(ev: GhEvent, token: string): Promise<void> {
+  const p = ev.payload;
+  if (ev.type !== "PushEvent" || Array.isArray(p.commits) && p.commits.length) return;
+  if (!p.before || !p.head) return;
+  try {
+    const res = await timedFetch(`${API}/repos/${ev.repo.name}/compare/${p.before}...${p.head}?per_page=20`, {
+      headers: headers(token),
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      total_commits: number;
+      commits: { sha: string; commit: { message: string; author: { name: string; email: string } } }[];
+    };
+    p.size = data.total_commits;
+    p.commits = data.commits.map((c) => ({ sha: c.sha, message: c.commit.message, author: c.commit.author }));
+  } catch (e) {
+    console.warn("enrich push", ev.id, e);
+  }
+}
