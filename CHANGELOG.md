@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Sound works in packaged Linux builds (WebKitGTK couldn't play from the app's own protocol)
+- Push toasts show the real commit count and message again (GitHub slimmed PushEvent payloads)
+- Poller can't freeze on a hung request anymore (20 s timeout); failing targets stay visible in the status
+- Your real avatar instead of a stale identicon
+- Toast links to the packaged desktop entry; menu category Development
+
 ## 0.2.0
 
 - Spanish and English UI
@@ -15,4 +23,3 @@
 
 - First release: tray app, native toasts, sounds, bell animation
 
-- 20 s timeout on GitHub requests; a hung request no longer stalls polling
