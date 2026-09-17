@@ -53,10 +53,12 @@ export function toNotice(ev: GhEvent, agentsEnabled = true): Notice | null {
   switch (ev.type) {
     case "PushEvent": {
       const branch = shortRef(p.ref);
-      const n: number = p.size ?? p.commits?.length ?? 0;
+      const n: number | undefined = p.size ?? (p.commits?.length || undefined);
       const msg = firstLine(p.commits?.[0]?.message);
       title = t("ev.push.title", { who, repo });
-      body = t(n === 1 ? "ev.push.body" : "ev.push.bodyPlural", { n, branch }) + (msg ? `: ${clip(msg)}` : "");
+      body = (n === undefined
+        ? t("ev.push.bodyUnknown", { branch })
+        : t(n === 1 ? "ev.push.body" : "ev.push.bodyPlural", { n, branch })) + (msg ? `: ${clip(msg)}` : "");
       url = p.before && p.head ? `${repoUrl}/compare/${p.before}...${p.head}` : `${repoUrl}/commits/${branch}`;
       break;
     }

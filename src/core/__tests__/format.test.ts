@@ -31,6 +31,11 @@ describe("toNotice", () => {
     expect(n.url).toBe("https://github.com/acme/api/compare/aaa...bbb");
   });
 
+  it("doesn't claim '0 commits' when GitHub omits the count", () => {
+    const n = toNotice(base("PushEvent", { ref: "refs/heads/main", before: "a", head: "b" }))!;
+    expect(n.body).toBe("en main");
+  });
+
   it("distinguishes merged from closed PRs", () => {
     const pr = { number: 7, title: "Add cache", html_url: "https://github.com/acme/api/pull/7" };
     expect(toNotice(base("PullRequestEvent", { action: "closed", number: 7, pull_request: { ...pr, merged: true } }))!.title)
