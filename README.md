@@ -25,9 +25,12 @@ No server, no webhooks, no browser tab left open. Your machine asks GitHub
 directly with your own token, once a minute, and the operating system shows
 the toast. That's it.
 
-<p align="center">
-  <img src="assets/screenshots/settings.png" alt="GitBell settings: one row per event category with its toggle and sound, over a glass window on KDE Plasma" width="640">
-</p>
+<table align="center">
+  <tr>
+    <td><img src="assets/screenshots/settings-account.png" alt="GitBell settings: account connected as @eJosR-Coding, watched targets and suggestions, on a glass window over KDE Plasma" width="400"></td>
+    <td><img src="assets/screenshots/settings-notifications.png" alt="GitBell settings: one row per event category with its toggle and sound" width="400"></td>
+  </tr>
+</table>
 
 ## Features ⭐
 
