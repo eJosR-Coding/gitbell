@@ -24,6 +24,25 @@ import {
 
 export type View = "activity" | "settings";
 
+/**
+ * GitHub's avatar CDN caches per exact query string, and `?v=4&s=96`
+ * (size appended after the API's `v`) can serve a stale identicon while
+ * `?s=96&v=4` (the order github.com itself uses) serves the real photo.
+ * Build the URL the way the website does.
+ */
+export function avatarAt(url: string, size: number): string {
+  try {
+    const u = new URL(url);
+    const v = u.searchParams.get("v");
+    u.search = "";
+    u.searchParams.set("s", String(size));
+    if (v) u.searchParams.set("v", v);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 /** Push the tint opacity into CSS. 1 = opaque. */
 export function applyGlass(opacity: number): void {
   document.documentElement.style.setProperty("--glass", String(Math.min(1, Math.max(0.3, opacity))));
@@ -121,7 +140,7 @@ export class Ui {
       for (const [img, nameEl, loginEl] of [["#id-avatar", "#id-name", "#id-login"], ["#acc-avatar", "#acc-name", "#acc-login"]]) {
         const i = $<HTMLImageElement>(img);
         i.hidden = !avatarUrl;
-        if (avatarUrl) i.src = `${avatarUrl}&s=96`;
+        if (avatarUrl) i.src = avatarAt(avatarUrl, 96);
         $(nameEl).textContent = name || login!;
         $(loginEl).textContent = `@${login}`;
       }
@@ -493,7 +512,7 @@ export class Ui {
             <time>${when}</time>
           </div>`;
         const img = li.querySelector<HTMLImageElement>("img")!;
-        if (n.avatar) img.src = `${n.avatar}&s=64`;
+        if (n.avatar) img.src = avatarAt(n.avatar, 64);
         else img.replaceWith(Object.assign(document.createElement("span"), { className: "notice-dot" }));
         const a = li.querySelector<HTMLAnchorElement>(".notice-title")!;
         a.textContent = n.title;
