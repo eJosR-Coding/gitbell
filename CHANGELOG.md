@@ -14,3 +14,5 @@
 ## 0.1.0
 
 - First release: tray app, native toasts, sounds, bell animation
+
+- 20 s timeout on GitHub requests; a hung request no longer stalls polling

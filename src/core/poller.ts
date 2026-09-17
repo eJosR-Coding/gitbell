@@ -104,6 +104,7 @@ export class Poller {
     this.cb.onStatus({ kind: "polling" });
     const fresh: Notice[] = [];
     let remaining: number | null = null;
+    const failed: string[] = [];
 
     for (const target of targets) {
       const url = endpointFor(target, login);
@@ -126,9 +127,12 @@ export class Poller {
           });
           return;
         }
-        const msg = e instanceof Error ? e.message : String(e);
-        this.cb.onStatus({ kind: "error", message: `${target}: ${msg}` });
-        // keep going with the other targets, one bad repo shouldn't kill the loop
+        // keep going with the other targets, one bad repo shouldn't kill
+        // the loop, but don't hide it behind a green "ok" either
+        const msg = e instanceof GhError && e.status === 404
+          ? t("poller.noAccess")
+          : e instanceof Error ? e.message : String(e);
+        failed.push(`${target}: ${msg}`);
       }
     }
 
@@ -141,7 +145,11 @@ export class Poller {
       await this.fire(unique);
       this.cb.onNotices(unique);
     }
-    this.cb.onStatus({ kind: "ok", at: new Date(), remaining });
+    if (failed.length) {
+      this.cb.onStatus({ kind: "error", message: failed.join(" · ") });
+    } else {
+      this.cb.onStatus({ kind: "ok", at: new Date(), remaining });
+    }
   }
 
   /** Returns notices for events newer than what we've seen for this target. */

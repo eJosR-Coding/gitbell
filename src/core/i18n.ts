@@ -127,6 +127,7 @@ const dict = {
     // poller
     "poller.noToken": "Falta el token de GitHub",
     "poller.rateLimit": "Rate limit de GitHub",
+    "poller.noAccess": "sin acceso o no existe (¿el token tiene el permiso repo?)",
     "poller.more": "…y {n} evento más. Abre la app para verlos.",
     "poller.morePlural": "…y {n} eventos más. Abre la app para verlos.",
     // event phrases
@@ -268,6 +269,7 @@ const dict = {
     "empty.body": "Pushes, PRs, reviews… from the repos you watch. The bell is ready.",
     "poller.noToken": "GitHub token missing",
     "poller.rateLimit": "GitHub rate limit",
+    "poller.noAccess": "no access or doesn't exist (does the token have the repo scope?)",
     "poller.more": "…and {n} more event. Open the app to see it.",
     "poller.morePlural": "…and {n} more events. Open the app to see them.",
     "ev.push.title": "{who} pushed to {repo}",
