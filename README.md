@@ -120,7 +120,7 @@ directory (`~/.local/share/dev.ejos.gitbell/` on Linux,
 |---|---|
 | `owner/repo` | one repository |
 | `org:name` | every repository in an organization you belong to |
-| `@me` | everything you watch or follow (your received-events feed) |
+| `@me` | everything you watch or follow (your received-events feed). Never includes your own activity: to get notified about your own pushes, add the repo itself |
 
 ## Agents 🤖
 
