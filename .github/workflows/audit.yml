@@ -1,4 +1,6 @@
 # Dependency hygiene: RustSec advisories on every lockfile change + weekly.
+# Results land as a check run, not as issues (transitive warnings from Tauri
+# were flooding the tracker). Known transitive advisories: src-tauri/.cargo/audit.toml
 name: audit
 
 on:
@@ -11,7 +13,6 @@ on:
 permissions:
   contents: read
   checks: write
-  issues: write
 
 jobs:
   cargo-audit:
