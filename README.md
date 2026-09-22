@@ -67,6 +67,9 @@ the toast. That's it.
   protocols), Windows 11 acrylic, macOS vibrancy. A slider in settings sets
   the opacity; 100% is opaque. GNOME shows the tint without blur.
 - **Three-step first run.** Token, what to watch (your busiest repos suggested), and a real notification from your own repo. Skippable, replayable from settings.
+- **Updates itself.** Checks for a new release after start and every few
+  hours, shows a banner, downloads a signed build and restarts. Signature is
+  verified before anything is installed.
 - **Tiny.** Built with Tauri v2: a few megabytes, not a bundled browser.
 
 ## How it works 🔔
@@ -303,7 +306,10 @@ git push --tags
 ```
 
 The release workflow builds Linux and Windows installers on GitHub-hosted
-runners and attaches them to a draft release. You don't need a Windows machine.
+runners, signs the updater artifacts with the `TAURI_SIGNING_PRIVATE_KEY`
+repository secret, generates `latest.json`, and attaches everything to a
+draft release. Publishing the draft is what makes installed copies see the
+update. You don't need a Windows machine.
 
 ## Roadmap 🗺
 
@@ -312,7 +318,7 @@ runners and attaches them to a draft release. You don't need a Windows machine.
 - [x] First-run onboarding, activity-first window, glass
 - [x] Unread dot on the tray icon
 - [x] Agent detection
-- [ ] Signed auto-updates
+- [x] Signed auto-updates
 - [ ] Public repo, AUR and winget packages, then COPR and apt
 - [ ] Instant mode: webhooks through a tiny relay instead of polling
 - [ ] macOS builds and notarization

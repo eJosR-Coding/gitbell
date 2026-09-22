@@ -127,6 +127,17 @@
     <main>
       <!-- ===== Activity: what happened, who you are ===== -->
       <section class="view" data-view="activity">
+        <div id="update-banner" class="update" hidden>
+          <div class="pose pose-sm" data-pose="celebrate" aria-hidden="true"></div>
+          <div class="update-text">
+            <p class="update-title" id="update-title"></p>
+            <p class="hint" id="update-notes"></p>
+          </div>
+          <div class="update-actions">
+            <button id="update-later" class="ghost" data-i18n="update.later"></button>
+            <button id="update-install" data-i18n="update.install"></button>
+          </div>
+        </div>
         <div id="identity" class="identity" hidden>
           <img id="id-avatar" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="36" height="36">
           <div class="id-text">

@@ -13,6 +13,7 @@ import { fetchSuggestions, isValidTarget, whoAmI, type Suggestions } from "../co
 import { ringTray, toast } from "../platform/notify";
 import { BUILTIN_SOUNDS, builtinLabel, customPath, playSound, type BuiltinSoundId, type SoundRef } from "../platform/sounds";
 import { applyStatic, initLang, t, type LangSetting } from "../core/i18n";
+import type { AvailableUpdate } from "../platform/updater";
 import {
   ALL_CATEGORIES,
   categoryLabel,
@@ -446,6 +447,30 @@ export class Ui {
     } catch {
       /* not supported in this env, leave unchecked */
     }
+  }
+
+  // ---- updates -----------------------------------------------------------
+
+  /** Show the "new version" banner; hides itself on "later". */
+  offerUpdate(u: AvailableUpdate): void {
+    const banner = $("#update-banner");
+    const title = $("#update-title");
+    const install = $<HTMLButtonElement>("#update-install");
+    title.textContent = t("update.available", { version: u.version });
+    $("#update-notes").textContent = u.notes.split("\n").slice(0, 3).join("\n");
+    banner.hidden = false;
+    $("#update-later").onclick = () => { banner.hidden = true; };
+    install.onclick = async () => {
+      install.disabled = true;
+      try {
+        await u.install((pct) => {
+          title.textContent = t("update.installing", { pct: pct === null ? "…" : `${pct}%` });
+        });
+      } catch (e) {
+        title.textContent = t("update.failed", { error: e instanceof Error ? e.message : String(e) });
+        install.disabled = false;
+      }
+    };
   }
 
   // ---- status + activity -------------------------------------------------
