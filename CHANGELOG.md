@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Signed auto-updates with an in-app banner
+- Audit warnings for transitive Tauri dependencies no longer open issues
+
 ## 0.2.1
 
 - Sound works in packaged Linux builds (WebKitGTK couldn't play from the app's own protocol)

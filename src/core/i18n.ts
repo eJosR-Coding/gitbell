@@ -75,6 +75,12 @@ const dict = {
     // recent
     "recent.title": "Actividad reciente",
     "recent.empty": "Todavía nada. Cuando alguien haga algo, aparece aquí.",
+    // updater
+    "update.available": "Hay una versión nueva: {version}",
+    "update.install": "Actualizar y reiniciar",
+    "update.installing": "Descargando… {pct}",
+    "update.later": "Después",
+    "update.failed": "No se pudo actualizar: {error}",
     // views + identity
     "view.activity": "Actividad",
     "view.settings": "Ajustes",
@@ -221,6 +227,11 @@ const dict = {
     "test.body": "This is what notifications look like. Click to open GitHub.",
     "recent.title": "Recent activity",
     "recent.empty": "Nothing yet. When someone does something, it shows up here.",
+    "update.available": "New version available: {version}",
+    "update.install": "Update and restart",
+    "update.installing": "Downloading… {pct}",
+    "update.later": "Later",
+    "update.failed": "Update failed: {error}",
     "view.activity": "Activity",
     "view.settings": "Settings",
     "id.connectedAs": "Connected as",

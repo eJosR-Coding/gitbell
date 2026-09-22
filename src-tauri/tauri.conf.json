@@ -46,6 +46,18 @@
     ],
     "category": "DeveloperTool",
     "shortDescription": "Your commits, noticed.",
-    "longDescription": "Native desktop notifications for GitHub activity and coding agents. Lives in the tray, rings when someone pushes, opens a PR, reviews or releases in the repos you watch."
+    "longDescription": "Native desktop notifications for GitHub activity and coding agents. Lives in the tray, rings when someone pushes, opens a PR, reviews or releases in the repos you watch.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY3M0U5RUREMzMzNzU2OUIKUldTYlZqY3ozWjQrOTZ1VFJwRjFkNFZrL3RKVmFTM01oY2gvTnVROVNtNUw4SEVGaFRTUTNGRHoK",
+      "endpoints": [
+        "https://github.com/eJosR-Coding/gitbell/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

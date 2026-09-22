@@ -9,6 +9,7 @@ import { markUnread } from "./platform/notify";
 import { playSound } from "./platform/sounds";
 import { getToken } from "./platform/secrets";
 import { loadRecent, loadSettings, saveRecent, saveSettings } from "./platform/settings";
+import { checkForUpdate } from "./platform/updater";
 import { Onboarding } from "./ui/onboarding";
 import { Ui, applyGlass } from "./ui/ui";
 
@@ -84,6 +85,15 @@ async function boot(): Promise<void> {
     },
   });
   await poller.start();
+
+  // updates: once shortly after boot (don't compete with the first poll),
+  // then every 6 h. Rust verifies the signature before installing anything.
+  const offerIfAny = async () => {
+    const u = await checkForUpdate();
+    if (u) ui.offerUpdate(u);
+  };
+  setTimeout(() => void offerIfAny(), 20_000);
+  setInterval(() => void offerIfAny(), 6 * 60 * 60 * 1000);
 
   // tray menu "Revisar ahora" emits this from Rust (see lib.rs)
   await listen("poll-now", () => poller.pollNow());
