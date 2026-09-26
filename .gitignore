@@ -25,3 +25,6 @@ dist-ssr
 
 # personal study notes, not part of the product
 APUNTES.md
+
+# codegraph local index
+.codegraph/
