@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-10-22
+
 - Signed auto-updates with an in-app banner
 - Audit warnings for transitive Tauri dependencies no longer open issues
 

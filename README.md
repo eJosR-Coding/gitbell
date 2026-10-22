@@ -11,10 +11,17 @@ noun
 
 [![CI](https://github.com/eJosR-Coding/gitbell/actions/workflows/ci.yml/badge.svg)](https://github.com/eJosR-Coding/gitbell/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/eJosR-Coding/gitbell?include_prereleases&label=release)](https://github.com/eJosR-Coding/gitbell/releases)
+[![Audit](https://github.com/eJosR-Coding/gitbell/actions/workflows/audit.yml/badge.svg)](https://github.com/eJosR-Coding/gitbell/actions/workflows/audit.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%20v2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
 ![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows-lightgrey)
 [![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-ejosjos31-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/ejosjos31)
+
+**Native desktop notifications for GitHub activity and coding agents, from your system tray.**
+
+<p align="center">
+  <img src="assets/demo.gif" alt="Illustrative demo: GitBell detects a push and a pull request opened by a coding agent and shows a notification for each, then the settings window with per-event toggles and sounds. The notification card is a mock-up composited over the real app UI running in a browser with sample data." width="800">
+</p>
 
 GitBell is a lightweight desktop app that lives in your system tray and pops a
 **native notification** the moment someone pushes, opens a pull request,
@@ -32,7 +39,7 @@ the toast. That's it.
   </tr>
 </table>
 
-## Features ⭐
+## Features
 
 - **Native toasts** on Linux (freedesktop) and Windows (WinRT). Clicking a
   toast on Linux opens the commit, PR or issue on GitHub.
@@ -72,7 +79,7 @@ the toast. That's it.
   verified before anything is installed.
 - **Tiny.** Built with Tauri v2: a few megabytes, not a bundled browser.
 
-## How it works 🔔
+## How it works
 
 ```
 ┌──────────┐   every 60 s, with ETag   ┌────────────────────┐
@@ -92,7 +99,16 @@ It keeps the id of the newest event it has seen per target and only notifies
 for events newer than that. Your token never leaves your machine except to
 call `api.github.com`.
 
-## Installation 💾
+- **ETag polling.** Every request carries `If-None-Match`; a `304` costs no
+  rate limit. GitHub's `X-Poll-Interval` and rate-limit headers are honored,
+  and a hung request times out after 20 s instead of freezing the loop.
+- **Keyring.** The token lives in the OS keyring (Secret Service / KWallet,
+  Credential Manager, Keychain), never in the settings file.
+- **Agent detection.** Commit trailers, bot logins, branch prefixes and PR
+  body markers identify Claude Code, Copilot, Codex and others. It only works
+  when the tool signs its work; see [Agents](#agents) for the limits.
+
+## Installation
 
 Grab the latest installer from the [Releases](https://github.com/eJosR-Coding/gitbell/releases) page:
 
@@ -101,6 +117,15 @@ Grab the latest installer from the [Releases](https://github.com/eJosR-Coding/gi
 | Linux | `.deb`, `.rpm`, `.AppImage` |
 | Windows | `.msi`, `.exe` |
 | macOS | coming soon (the CI matrix entry is one uncomment away) |
+
+```sh
+sudo apt install ./GitBell_*_amd64.deb      # Debian, Ubuntu
+sudo dnf install ./GitBell-*.x86_64.rpm     # Fedora
+chmod +x GitBell_*_amd64.AppImage && ./GitBell_*_amd64.AppImage
+```
+
+From 0.3.0 on GitBell updates itself (signed, verified before install).
+0.2.1 and earlier have no updater: install 0.3.0 by hand once.
 
 ### Token
 
@@ -125,14 +150,14 @@ directory (`~/.local/share/dev.ejos.gitbell/` on Linux,
 | `org:name` | every repository in an organization you belong to |
 | `@me` | everything you watch or follow (your received-events feed). Never includes your own activity: to get notified about your own pushes, add the repo itself |
 
-## Agents 🤖
+## Agents
 
 GitHub has no "an agent did this" flag. GitBell reads the fingerprints the
 tools leave by default: `Co-Authored-By` trailers, session-link trailers
 (`Claude-Session:`, `Agent-Logs-Url:`), bot logins (`copilot-swe-agent[bot]`,
 `claude[bot]`), branch prefixes (`claude/`, `copilot/`, `cursor/`) and PR
 body markers. A hit moves the event to the **Agents** category with its own
-toggle and sound, the toast reads "🤖 Claude Code (@you) pushed to …", and
+toggle and sound, the toast reads "Claude Code (@you) pushed to …" with a robot prefix, and
 the link prefers the agent's session. Your own agents count even with
 "ignore my own activity" on, because cloud sessions push as you.
 
@@ -151,7 +176,7 @@ those cases use the hook below: the agent tells GitBell directly, no git
 forensics involved. Models (DeepSeek, GPT, Claude) are not tools; the mark
 comes from whatever wraps them.
 
-## Notify from scripts and agents 🤖
+## Notify from scripts and agents
 
 GitBell doubles as a local notification endpoint. While it's running in the
 tray, any script can make it ring:
@@ -212,7 +237,7 @@ them, hook the `Bash` tool and look for `git commit`:
 Any tool that can run a shell command works the same way: CI scripts, long
 test runs, deploys, cron jobs.
 
-## Architecture 🧱
+## Architecture
 
 ```
 src/                       TypeScript, runs in the webview
@@ -246,14 +271,14 @@ src-tauri/src/             Rust, the trusted side
 Rust stays thin on purpose. Anything that doesn't need OS access lives in
 `src/core`, which has no Tauri imports and is trivially unit-testable.
 
-## Security 🔒
+## Security
 
 The webview is treated as untrusted and Rust is the authority. Token in the
 OS keyring, least-privilege capabilities, opener scoped to `github.com`,
 asset protocol scoped to the app's own sounds folder, strict CSP, and
 `cargo audit` plus Dependabot in CI. Details in [SECURITY.md](SECURITY.md).
 
-## Building from source 🛠
+## Building from source
 
 Prerequisites: Rust stable, Node 22, pnpm, and the
 [Tauri system dependencies](https://tauri.app/start/prerequisites/) for your OS.
@@ -284,7 +309,7 @@ pnpm test                                        # TypeScript core (Vitest)
 cargo test --manifest-path src-tauri/Cargo.toml  # Rust
 ```
 
-## Known limitations ⚠️
+## Known limitations
 
 - **Windows installers aren't code-signed yet.** SmartScreen shows "Windows
   protected your PC"; choose *More info → Run anyway*. Signing is on the
@@ -298,20 +323,13 @@ cargo test --manifest-path src-tauri/Cargo.toml  # Rust
   (Gemini CLI, Cline and friends) or users who turned attribution off are
   invisible; use `gitbell notify` from a hook for those.
 
-## Releasing 🚀
+## Releasing
 
-```sh
-git tag v0.3.0
-git push --tags
-```
+Pushing a `vX.Y.Z` tag builds the installers and drafts a signed release.
+The full procedure, secrets and update-manifest details are in
+[RELEASING.md](RELEASING.md).
 
-The release workflow builds Linux and Windows installers on GitHub-hosted
-runners, signs the updater artifacts with the `TAURI_SIGNING_PRIVATE_KEY`
-repository secret, generates `latest.json`, and attaches everything to a
-draft release. Publishing the draft is what makes installed copies see the
-update. You don't need a Windows machine.
-
-## Roadmap 🗺
+## Roadmap
 
 - [x] Spanish and English UI
 - [x] `gitbell notify` for scripts and agents
@@ -325,14 +343,14 @@ update. You don't need a Windows machine.
 - [ ] Do-not-disturb schedule
 - [ ] Per-branch filters (`main` yes, `feature/*` no)
 
-## Contributing 💬
+## Contributing
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md)
 for the project layout and a few ground rules.
 
-## Support GitBell 💗
+## Support GitBell
 
-If GitBell saves you from refreshing GitHub one more time, a ⭐ on the repo
+If GitBell saves you from refreshing GitHub one more time, a star on the repo
 goes a long way. And if it saved you more than that:
 
 <a href="https://buymeacoffee.com/ejosjos31" target="_blank">
