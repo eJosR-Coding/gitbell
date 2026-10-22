@@ -1472,7 +1472,7 @@ dependencies = [
 
 [[package]]
 name = "gitbell"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "gdk",
  "gdkwayland-sys",
