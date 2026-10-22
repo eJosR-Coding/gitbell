@@ -19,6 +19,10 @@ noun
 
 **Native desktop notifications for GitHub activity and coding agents, from your system tray.**
 
+<p align="center">
+  <img src="assets/demo.gif" alt="Illustrative demo: GitBell detects a push and a pull request opened by a coding agent and shows a notification for each, then the settings window with per-event toggles and sounds. The notification card is a mock-up composited over the real app UI running in a browser with sample data." width="800">
+</p>
+
 GitBell is a lightweight desktop app that lives in your system tray and pops a
 **native notification** the moment someone pushes, opens a pull request,
 reviews, merges or releases in the repositories and organizations you care
