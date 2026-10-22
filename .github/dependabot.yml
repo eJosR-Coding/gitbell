@@ -4,6 +4,13 @@ updates:
     directory: /src-tauri
     schedule:
       interval: weekly
+    ignore:
+      # glib/gtk/gdk must match the gtk-rs version tao and wry pin (0.18);
+      # bumping glib alone breaks the build. Revisit when Tauri moves gtk-rs.
+      - dependency-name: "glib"
+      - dependency-name: "gtk"
+      - dependency-name: "gdk"
+      - dependency-name: "gdkwayland-sys"
   - package-ecosystem: npm
     directory: /
     schedule:
